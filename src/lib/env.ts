@@ -26,3 +26,15 @@ export function envServidor() {
     })
     .parse({ SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY });
 }
+
+/** URL pública do app (links nas notificações). Sem barra no fim. */
+export function appUrl(): string | undefined {
+  const url = process.env.APP_URL?.trim();
+  return url ? url.replace(/\/+$/, "") : undefined;
+}
+
+/** Segredo que o pg_cron envia para /api/cron/alertas. */
+export function cronSecret(): string | undefined {
+  const s = process.env.CRON_SECRET?.trim();
+  return s && s.length >= 32 ? s : undefined;
+}

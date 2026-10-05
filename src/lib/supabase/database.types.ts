@@ -50,6 +50,16 @@ type RetornoChamado = {
   }
 }
 
+type RetornoListaChamados = {
+  Returns: ChamadoRow[]
+  SetofOptions: {
+    from: "*"
+    to: "chamados"
+    isOneToOne: false
+    isSetofReturn: true
+  }
+}
+
 export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.18"
@@ -337,6 +347,27 @@ export type Database = {
       }
       assumir_chamado: RetornoChamado & { Args: { p_chamado_id: string } }
       cancelar_chamado: RetornoChamado & { Args: { p_chamado_id: string; p_motivo: string } }
+      consumir_limite: {
+        Args: { p_chave: string; p_janela_segundos: number; p_max: number }
+        Returns: boolean
+      }
+      disparar_cron_alertas: { Args: never; Returns: undefined }
+      existem_notificacoes_pendentes: { Args: never; Returns: boolean }
+      indicadores: {
+        Args: {
+          p_categoria_id?: number
+          p_fim: string
+          p_inicio: string
+          p_tecnico_id?: string
+          p_turno?: string
+        }
+        Returns: Json
+      }
+      liberar_notificacao_novo: { Args: { p_chamado_id: string }; Returns: undefined }
+      reivindicar_alertas_prazo: RetornoListaChamados & { Args: { p_limite?: number } }
+      reivindicar_novos_chamados: RetornoListaChamados & {
+        Args: { p_chamado_id?: string; p_limite?: number }
+      }
       eh_admin: { Args: never; Returns: boolean }
       eh_equipe: { Args: never; Returns: boolean }
       finalizar_chamado: RetornoChamado & { Args: { p_chamado_id: string; p_observacao: string } }

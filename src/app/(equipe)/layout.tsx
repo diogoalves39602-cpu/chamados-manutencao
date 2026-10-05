@@ -12,7 +12,7 @@ export default async function LayoutEquipe({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white">
+      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-2">
           <Link href="/painel" className="text-sm font-bold text-blue-800">
             Chamados
