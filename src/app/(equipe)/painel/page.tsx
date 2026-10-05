@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { ClipboardList } from "lucide-react";
+import { CabecalhoPagina } from "@/components/ui";
 import { exigirEquipe } from "@/lib/auth/sessao";
 import {
   FILTROS_PRAZO,
@@ -17,7 +19,7 @@ import { FiltrosPainel } from "./filtros-painel";
 export const metadata: Metadata = { title: "Painel" };
 
 export default async function Painel({ searchParams }: PageProps<"/painel">) {
-  await exigirEquipe();
+  const perfil = await exigirEquipe();
   const filtros = lerFiltros(await searchParams);
   const agora = new Date();
   const [{ chamados, limitado }, tecnicos, categorias] = await Promise.all([
@@ -64,11 +66,25 @@ export default async function Painel({ searchParams }: PageProps<"/painel">) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-bold text-zinc-900">{FILTROS_STATUS[filtros.status]}</h1>
+      <CabecalhoPagina
+        icone={ClipboardList}
+        titulo={filtros.status === "ativos" ? "Fila de chamados" : FILTROS_STATUS[filtros.status]}
+        subtitulo={
+          filtros.status === "ativos"
+            ? "Ordenada pelo prazo mais próximo. Atualiza sozinha quando chega chamado."
+            : "Histórico de chamados, do mais recente para o mais antigo."
+        }
+      />
       <Suspense>
         <FiltrosPainel filtros={opcoesFiltro} />
       </Suspense>
-      <Fila chamados={chamados} agoraServidor={agora.getTime()} limitado={limitado} />
+      <Fila
+        chamados={chamados}
+        agoraServidor={agora.getTime()}
+        limitado={limitado}
+        meuId={perfil.id}
+        apenasFila={filtros.status === "ativos"}
+      />
     </div>
   );
 }

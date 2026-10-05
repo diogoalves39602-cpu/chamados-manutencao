@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Alerta, Botao, Campo } from "@/components/ui";
+import { Ban, Hourglass, ShieldCheck, Wrench } from "lucide-react";
+import { Alerta, Botao, Campo, Selo } from "@/components/ui";
+import { iniciais } from "@/lib/iniciais";
 import { alterarAtivo, alterarPapel, redefinirSenha, type EstadoForm } from "./actions";
 import { gerarSenha } from "./senha";
 import { SenhaGerada } from "./senha-gerada";
@@ -25,27 +27,33 @@ export function LinhaUsuario({ usuario, ehVoce }: { usuario: Usuario; ehVoce: bo
   const erro = estadoAtivo.erro ?? estadoPapel.erro ?? estadoSenha.erro;
 
   return (
-    <li className={`flex flex-col gap-3 px-4 py-4 sm:px-6 ${usuario.ativo ? "" : "bg-zinc-50"}`}>
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <p className={`font-medium ${usuario.ativo ? "text-zinc-900" : "text-zinc-500 line-through"}`}>
-            {usuario.nome} {ehVoce ? <span className="text-xs font-normal text-zinc-500">(você)</span> : null}
-          </p>
-          <p className="font-mono text-xs text-zinc-500">{usuario.login}</p>
-        </div>
+    <li className={`flex flex-col gap-3 px-4 py-4 sm:px-6 ${usuario.ativo ? "" : "bg-stone-50"}`}>
+      <div className="flex flex-wrap items-center gap-3">
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-            usuario.papel === "admin" ? "bg-purple-100 text-purple-800" : "bg-zinc-100 text-zinc-700"
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-bold ${
+            usuario.ativo ? "bg-marca-100 text-marca-800" : "bg-stone-200 text-stone-500"
           }`}
+          aria-hidden
         >
-          {usuario.papel === "admin" ? "Admin" : "Técnico"}
+          {iniciais(usuario.nome)}
         </span>
+        <div className="min-w-0 flex-1">
+          <p className={`font-semibold ${usuario.ativo ? "text-stone-900" : "text-stone-500 line-through"}`}>
+            {usuario.nome} {ehVoce ? <span className="text-xs font-normal text-stone-500">(você)</span> : null}
+          </p>
+          <p className="font-mono text-xs text-stone-500">{usuario.login}</p>
+        </div>
+        <Selo className={usuario.papel === "admin" ? "bg-marca-700 text-white" : "bg-stone-100 text-stone-700"} icone={usuario.papel === "admin" ? ShieldCheck : Wrench}>
+          {usuario.papel === "admin" ? "Admin" : "Técnico"}
+        </Selo>
         {!usuario.ativo ? (
-          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">Desativado</span>
+          <Selo className="bg-stone-200 text-stone-700" icone={Ban}>
+            Desativado
+          </Selo>
         ) : usuario.deve_trocar_senha ? (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+          <Selo className="bg-amber-100 text-amber-900" icone={Hourglass}>
             Aguardando 1º acesso
-          </span>
+          </Selo>
         ) : null}
       </div>
 
@@ -96,7 +104,7 @@ export function LinhaUsuario({ usuario, ehVoce }: { usuario: Usuario; ehVoce: bo
             acaoSenha(fd);
             setRedefinindo(false);
           }}
-          className="flex flex-wrap items-end gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+          className="flex flex-wrap items-end gap-2 rounded-lg border border-stone-200 bg-stone-50 p-3"
         >
           <input type="hidden" name="id" value={usuario.id} />
           <div className="min-w-48 flex-1">

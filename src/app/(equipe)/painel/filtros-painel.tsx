@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown, Filter, RotateCcw } from "lucide-react";
 import { Selecao } from "@/components/ui";
 
 type Opcao = { valor: string; rotulo: string };
@@ -23,11 +24,14 @@ export function FiltrosPainel({
   }
 
   return (
-    <details className="rounded-xl border border-zinc-200 bg-white" open={ativos > 0}>
-      <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-zinc-800">
-        Filtros {ativos > 0 ? <span className="ml-1 rounded-full bg-blue-100 px-2 text-blue-800">{ativos}</span> : null}
+    <details className="group rounded-2xl border border-stone-200 bg-white shadow-sm" open={ativos > 0}>
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold text-stone-800 [&::-webkit-details-marker]:hidden">
+        <Filter className="h-4 w-4 text-stone-500" aria-hidden />
+        Filtros
+        {ativos > 0 ? <span className="rounded-full bg-marca-700 px-2 text-xs text-white">{ativos}</span> : null}
+        <ChevronDown className="ml-auto h-4 w-4 text-stone-400 transition-transform group-open:rotate-180" aria-hidden />
       </summary>
-      <div className="grid gap-3 border-t border-zinc-200 p-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 border-t border-stone-100 p-4 sm:grid-cols-2 lg:grid-cols-5">
         {filtros.map((f) => (
           <Selecao
             key={f.nome}
@@ -43,6 +47,16 @@ export function FiltrosPainel({
             ))}
           </Selecao>
         ))}
+        {ativos > 0 ? (
+          <button
+            type="button"
+            onClick={() => router.replace("?", { scroll: false })}
+            className="inline-flex items-center gap-1.5 justify-self-start rounded-lg px-2 py-1.5 text-sm font-medium text-marca-700 hover:bg-marca-50 sm:col-span-2 lg:col-span-5"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            Limpar filtros
+          </button>
+        ) : null}
       </div>
     </details>
   );

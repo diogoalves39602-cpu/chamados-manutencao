@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import QRCode from "qrcode";
+import { QrCode } from "lucide-react";
+import { Marca } from "@/components/marca";
+import { CabecalhoPagina } from "@/components/ui";
 import { descreverSla } from "@/lib/chamados/rotulos";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { urlBase } from "@/lib/url";
@@ -17,16 +20,25 @@ export default async function PaginaQrCode() {
   return (
     <div className="flex flex-col gap-6">
       <div className="print:hidden">
-        <h1 className="text-xl font-bold text-zinc-900">QR Code e link do formulário</h1>
-        <p className="text-sm text-zinc-600">
-          Imprima o cartaz ou copie o link para divulgar nos grupos do Feishu e do Lark. Se o endereço abaixo não for o
-          definitivo, defina a variável <code>APP_URL</code> no servidor.
-        </p>
+        <CabecalhoPagina
+          icone={QrCode}
+          titulo="QR Code e link do formulário"
+          subtitulo={
+            <>
+              Imprima o cartaz ou copie o link para divulgar nos grupos do Feishu e do Lark. Se o endereço abaixo não for o
+              definitivo, defina a variável <code>APP_URL</code> no servidor.
+            </>
+          }
+        />
       </div>
 
-      <section className="mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border-2 border-zinc-900 bg-white p-8 text-center print:border-0">
-        <h2 className="text-2xl font-bold">Problema de manutenção?</h2>
-        <p className="text-base">Aponte a câmera do celular e abra um chamado.</p>
+      <section className="mx-auto flex w-full max-w-md flex-col items-center overflow-hidden rounded-3xl border border-stone-200 bg-white text-center shadow-lg print:border-0 print:shadow-none">
+        <div className="fundo-marca flex w-full flex-col items-center gap-3 px-8 py-6 text-white print:[-webkit-print-color-adjust:exact] print:[print-color-adjust:exact]">
+          <Marca claro />
+          <h2 className="text-2xl font-bold">Problema de manutenção?</h2>
+          <p className="text-base text-marca-100">Aponte a câmera do celular e abra um chamado.</p>
+        </div>
+        <div className="flex flex-col items-center gap-4 p-8 pt-6">
         <div
           className="w-64 [&>svg]:h-auto [&>svg]:w-full"
           role="img"
@@ -34,7 +46,8 @@ export default async function PaginaQrCode() {
           dangerouslySetInnerHTML={{ __html: svg }}
         />
         <p className="break-all font-mono text-sm">{url}</p>
-        <p className="text-sm text-zinc-600">Atendimento 24 horas · prazo de até {prazo}</p>
+        <p className="text-sm font-semibold text-marca-800">Atendimento 24 horas · prazo de até {prazo}</p>
+        </div>
       </section>
 
       <div className="flex justify-center print:hidden">

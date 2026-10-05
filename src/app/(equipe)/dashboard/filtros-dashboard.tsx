@@ -38,7 +38,7 @@ export function FiltrosDashboard({
   }
 
   return (
-    <div className="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
       <Selecao id="f-periodo" rotulo="Período" value={periodo} onChange={(e) => mudar({ periodo: e.target.value })}>
         {periodos.map((o) => (
           <option key={o.valor} value={o.valor}>

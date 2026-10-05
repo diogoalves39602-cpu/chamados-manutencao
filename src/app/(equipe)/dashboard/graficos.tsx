@@ -15,7 +15,7 @@ const num = (n: number) => n.toLocaleString("pt-BR");
 
 function Legenda({ itens }: { itens: { cor: string; rotulo: string }[] }) {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600">
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
       {itens.map((i) => (
         <li key={i.rotulo} className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm" style={{ background: i.cor }} aria-hidden />
@@ -52,7 +52,7 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
       />
       <div className="relative">
         <div className="absolute inset-x-0 top-0 border-t" style={{ borderColor: COR.grade }} aria-hidden />
-        <span className="absolute -top-2 right-0 bg-white pl-1 text-[10px] tabular-nums text-zinc-400">{num(maximo)}</span>
+        <span className="absolute -top-2 right-0 bg-white pl-1 text-[10px] tabular-nums text-stone-400">{num(maximo)}</span>
         <div className="flex h-44 items-end gap-[2px] border-b" style={{ borderColor: COR.pendente }}>
           {dias.map((d) => {
             const total = d.dentro + d.fora + d.abertos + d.em_andamento;
@@ -72,24 +72,24 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
                   )}
                 </div>
                 {/* Tooltip (hover no computador, toque/foco no celular) */}
-                <div className="pointer-events-none absolute bottom-full z-10 mb-1 hidden w-40 rounded-lg border border-zinc-200 bg-white p-2 text-xs shadow-lg group-hover:block group-focus:block">
-                  <p className="font-semibold text-zinc-900">{rotuloDia(d.chave)} · {num(d.total)} chamados</p>
+                <div className="pointer-events-none absolute bottom-full z-10 mb-1 hidden w-40 rounded-lg border border-stone-200 bg-white p-2 text-xs shadow-lg group-hover:block group-focus:block">
+                  <p className="font-semibold text-stone-900">{rotuloDia(d.chave)} · {num(d.total)} chamados</p>
                   {segmentos(d).map((s) => (
-                    <p key={s.rotulo} className="flex items-center justify-between gap-2 text-zinc-600">
+                    <p key={s.rotulo} className="flex items-center justify-between gap-2 text-stone-600">
                       <span className="inline-flex items-center gap-1">
                         <span className="h-2 w-2 rounded-sm" style={{ background: s.cor }} aria-hidden />
                         {s.rotulo}
                       </span>
-                      <span className="tabular-nums text-zinc-900">{num(s.valor)}</span>
+                      <span className="tabular-nums text-stone-900">{num(s.valor)}</span>
                     </p>
                   ))}
-                  {d.cancelados ? <p className="text-zinc-500">Cancelados: {num(d.cancelados)}</p> : null}
+                  {d.cancelados ? <p className="text-stone-500">Cancelados: {num(d.cancelados)}</p> : null}
                 </div>
               </div>
             );
           })}
         </div>
-        <div className="mt-1 flex gap-[2px] text-[10px] tabular-nums text-zinc-500">
+        <div className="mt-1 flex gap-[2px] text-[10px] tabular-nums text-stone-500">
           {dias.map((d, i) => (
             <span key={d.chave} className="flex-1 text-center">
               {i % passo === 0 || i === dias.length - 1 ? rotuloDia(d.chave) : ""}
@@ -98,10 +98,10 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
         </div>
       </div>
       <details className="text-sm">
-        <summary className="cursor-pointer text-blue-700">Ver em tabela</summary>
+        <summary className="cursor-pointer font-medium text-marca-700">Ver em tabela</summary>
         <div className="mt-2 max-h-72 overflow-auto">
           <table className="w-full text-left text-xs tabular-nums">
-            <thead className="sticky top-0 bg-white text-zinc-500">
+            <thead className="sticky top-0 bg-white text-stone-500">
               <tr>
                 <th className="py-1">Dia</th>
                 <th>Total</th>
@@ -113,7 +113,7 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
             </thead>
             <tbody>
               {dias.map((d) => (
-                <tr key={d.chave} className="border-t border-zinc-100">
+                <tr key={d.chave} className="border-t border-stone-100">
                   <td className="py-1">{rotuloDia(d.chave)}</td>
                   <td>{num(d.total)}</td>
                   <td>{num(d.dentro)}</td>
@@ -132,15 +132,15 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
 
 /** Barras horizontais: total de chamados por item, com % no prazo e tempo médio ao lado. */
 export function Ranking({ grupos, vazio = "Sem dados no período." }: { grupos: Grupo[]; vazio?: string }) {
-  if (grupos.length === 0) return <p className="text-sm text-zinc-500">{vazio}</p>;
+  if (grupos.length === 0) return <p className="text-sm text-stone-500">{vazio}</p>;
   const maximo = Math.max(1, ...grupos.map((g) => g.total));
   return (
     <ul className="flex flex-col gap-3">
       {grupos.map((g) => (
         <li key={g.chave} className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-2 text-sm">
-            <span className="truncate font-medium text-zinc-900">{g.chave}</span>
-            <span className="shrink-0 text-xs text-zinc-500">
+            <span className="truncate font-medium text-stone-900">{g.chave}</span>
+            <span className="shrink-0 text-xs text-stone-500">
               {formatarPct(pctDentro(g))} no prazo · {formatarDuracao(g.tempo_medio_total)}
             </span>
           </div>
@@ -152,7 +152,7 @@ export function Ranking({ grupos, vazio = "Sem dados no período." }: { grupos: 
                 title={`${g.total} chamados · ${g.finalizados} finalizados · ${g.dentro} no prazo · ${g.fora} fora`}
               />
             </div>
-            <span className="w-10 shrink-0 text-right text-sm tabular-nums text-zinc-900">{num(g.total)}</span>
+            <span className="w-10 shrink-0 text-right text-sm tabular-nums text-stone-900">{num(g.total)}</span>
           </div>
         </li>
       ))}

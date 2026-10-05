@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { PaginaPublica } from "@/components/pagina-publica";
 import { obterSessao } from "@/lib/auth/sessao";
 import { FormTrocarSenha } from "./form-trocar-senha";
 
@@ -11,16 +12,16 @@ export default async function PaginaTrocarSenha() {
   if (!perfil || !perfil.ativo) redirect("/sair?motivo=inativo");
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Trocar senha</h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          {perfil.deve_trocar_senha
-            ? `Olá, ${perfil.nome}. Antes de continuar, crie uma senha pessoal.`
-            : "Escolha uma nova senha."}
-        </p>
-      </div>
+    <PaginaPublica
+      titulo={perfil.deve_trocar_senha ? `Bem-vindo, ${perfil.nome.split(" ")[0]}!` : "Trocar senha"}
+      subtitulo={
+        perfil.deve_trocar_senha
+          ? "Antes de continuar, crie uma senha pessoal. Anote-a: o administrador não consegue vê-la."
+          : "Escolha uma nova senha."
+      }
+      largura="max-w-md"
+    >
       <FormTrocarSenha obrigatoria={perfil.deve_trocar_senha} />
-    </main>
+    </PaginaPublica>
   );
 }

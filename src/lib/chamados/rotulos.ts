@@ -14,8 +14,8 @@ export const ROTULO_STATUS: Record<Status, string> = {
 export const COR_STATUS: Record<Status, string> = {
   aberto: "bg-sky-100 text-sky-800",
   em_andamento: "bg-indigo-100 text-indigo-800",
-  finalizado: "bg-zinc-100 text-zinc-700",
-  cancelado: "bg-zinc-100 text-zinc-500",
+  finalizado: "bg-stone-100 text-stone-700",
+  cancelado: "bg-stone-100 text-stone-500",
 };
 
 export const ROTULO_SITUACAO: Record<SituacaoPrazo, string> = {

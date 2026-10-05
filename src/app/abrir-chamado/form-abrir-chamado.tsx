@@ -1,7 +1,10 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
-import { Alerta, Botao, Campo, Cartao, Selecao } from "@/components/ui";
+import Link from "next/link";
+import { CircleCheckBig, ImagePlus, Search, Send, X } from "lucide-react";
+import { IconeCategoria } from "@/components/icone-categoria";
+import { AreaTexto, Alerta, Botao, Campo, Cartao } from "@/components/ui";
 import { formatarDataHora } from "@/lib/datas";
 import { abrirChamado, type EstadoAbrir } from "./actions";
 import { comprimirFoto } from "./comprimir";
@@ -9,12 +12,22 @@ import { comprimirFoto } from "./comprimir";
 const CHAVE_LOCAL = "chamados:solicitante";
 const CAMPOS_LEMBRADOS = ["solicitante_nome", "solicitante_setor", "solicitante_contato"] as const;
 
+function TituloSecao({ numero, children }: { numero: number; children: string }) {
+  return (
+    <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+      <span className="grid h-6 w-6 place-items-center rounded-full bg-marca-700 text-xs text-white">{numero}</span>
+      {children}
+    </h2>
+  );
+}
+
 export function FormAbrirChamado({ categorias }: { categorias: { id: number; nome: string }[] }) {
   const [estado, acao, pendente] = useActionState(abrirChamado, {} as EstadoAbrir);
   const [erroFoto, setErroFoto] = useState<string>();
   const [preparando, setPreparando] = useState(false);
   const [previa, setPrevia] = useState<string>();
   const formRef = useRef<HTMLFormElement>(null);
+  const fotoRef = useRef<HTMLInputElement>(null);
 
   // Preenche nome/setor/contato usados da última vez neste aparelho.
   useEffect(() => {
@@ -62,21 +75,35 @@ export function FormAbrirChamado({ categorias }: { categorias: { id: number; nom
 
   if (estado.sucesso) {
     return (
-      <Cartao className="flex flex-col gap-4 text-center">
-        <p className="text-sm font-medium text-green-700">Chamado registrado!</p>
-        <p className="text-4xl font-bold tracking-tight text-zinc-900">{estado.sucesso.numero}</p>
-        <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-700">
+      <Cartao className="flex animate-entrar flex-col items-center gap-4 text-center">
+        <span className="grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+          <CircleCheckBig className="h-9 w-9" aria-hidden />
+        </span>
+        <div>
+          <p className="text-sm font-medium text-stone-600">Chamado registrado com sucesso</p>
+          <p className="mt-1 font-mono text-4xl font-bold tracking-tight text-stone-900">{estado.sucesso.numero}</p>
+        </div>
+        <div className="w-full rounded-xl bg-marca-50 p-4 text-sm text-stone-700">
           <p>Aberto em {formatarDataHora(estado.sucesso.aberto_em)}</p>
-          <p className="mt-1 text-base font-semibold text-zinc-900">
+          <p className="mt-1 text-base font-semibold text-marca-800">
             Prazo limite: {formatarDataHora(estado.sucesso.prazo_limite)}
           </p>
         </div>
-        <p className="text-sm text-zinc-600">
-          Anote o número para acompanhar com a equipe de manutenção. A equipe já foi avisada.
+        <p className="text-sm text-stone-600">
+          A equipe já foi avisada. Anote o número para acompanhar o andamento.
         </p>
-        <Botao type="button" variante="secundario" onClick={() => window.location.reload()}>
-          Abrir outro chamado
-        </Botao>
+        <div className="flex w-full flex-col gap-2 sm:flex-row">
+          <Link
+            href={`/acompanhar?numero=${estado.sucesso.numero}`}
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-marca-700 px-4 text-sm font-semibold text-white hover:bg-marca-800"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+            Acompanhar este chamado
+          </Link>
+          <Botao type="button" variante="secundario" className="flex-1" onClick={() => window.location.reload()}>
+            Abrir outro chamado
+          </Botao>
+        </div>
       </Cartao>
     );
   }
@@ -84,8 +111,8 @@ export function FormAbrirChamado({ categorias }: { categorias: { id: number; nom
   const ocupado = pendente || preparando;
 
   return (
-    <Cartao>
-      <form ref={formRef} onSubmit={enviar} className="flex flex-col gap-4" noValidate>
+    <Cartao className="animate-entrar">
+      <form ref={formRef} onSubmit={enviar} className="flex flex-col gap-6" noValidate>
         {estado.erro ? <Alerta>{estado.erro}</Alerta> : null}
 
         {/* Honeypot anti-robô: invisível para pessoas. */}
@@ -94,80 +121,108 @@ export function FormAbrirChamado({ categorias }: { categorias: { id: number; nom
           <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
         </div>
 
-        <Campo id="solicitante_nome" name="solicitante_nome" rotulo="Seu nome" autoComplete="name" required maxLength={120} erro={estado.erros?.solicitante_nome} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Campo id="solicitante_setor" name="solicitante_setor" rotulo="Setor" required maxLength={80} erro={estado.erros?.solicitante_setor} />
+        <fieldset className="flex flex-col gap-4">
+          <legend className="contents">
+            <TituloSecao numero={1}>Seus dados</TituloSecao>
+          </legend>
+          <Campo id="solicitante_nome" name="solicitante_nome" rotulo="Seu nome" autoComplete="name" required maxLength={120} erro={estado.erros?.solicitante_nome} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo id="solicitante_setor" name="solicitante_setor" rotulo="Setor" required maxLength={80} erro={estado.erros?.solicitante_setor} />
+            <Campo
+              id="solicitante_contato"
+              name="solicitante_contato"
+              rotulo="Telefone ou e-mail"
+              autoComplete="tel"
+              required
+              maxLength={120}
+              erro={estado.erros?.solicitante_contato}
+            />
+          </div>
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-4">
+          <legend className="contents">
+            <TituloSecao numero={2}>O problema</TituloSecao>
+          </legend>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-stone-800">Categoria</span>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Categoria">
+              {categorias.map((c) => (
+                <label key={c.id} className="cursor-pointer">
+                  <input type="radio" name="categoria_id" value={c.id} className="peer sr-only" required />
+                  <span className="flex min-h-14 items-center gap-2 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 transition-colors hover:border-marca-300 peer-checked:border-marca-700 peer-checked:bg-marca-700 peer-checked:text-white peer-checked:shadow-md peer-focus-visible:ring-4 peer-focus-visible:ring-marca-200">
+                    <IconeCategoria nome={c.nome} className="h-5 w-5 shrink-0" />
+                    <span className="leading-tight">{c.nome}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            {estado.erros?.categoria_id ? <p className="text-xs font-medium text-red-600">{estado.erros.categoria_id}</p> : null}
+          </div>
           <Campo
-            id="solicitante_contato"
-            name="solicitante_contato"
-            rotulo="Telefone ou e-mail"
-            autoComplete="tel"
+            id="local"
+            name="local"
+            rotulo="Local do problema"
+            placeholder="Ex.: Bloco B, 2º andar, sala 204"
             required
-            maxLength={120}
-            erro={estado.erros?.solicitante_contato}
+            maxLength={160}
+            erro={estado.erros?.local}
           />
-        </div>
-        <Campo
-          id="local"
-          name="local"
-          rotulo="Local do problema"
-          placeholder="Ex.: Bloco B, 2º andar, sala 204"
-          required
-          maxLength={160}
-          erro={estado.erros?.local}
-        />
-        <div className="flex flex-col gap-1">
-          <Selecao id="categoria_id" name="categoria_id" rotulo="Categoria" required defaultValue="">
-            <option value="" disabled>
-              Selecione…
-            </option>
-            {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </Selecao>
-          {estado.erros?.categoria_id ? <p className="text-xs text-red-600">{estado.erros.categoria_id}</p> : null}
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="descricao" className="text-sm font-medium text-zinc-800">
-            Descreva o problema
-          </label>
-          <textarea
+          <AreaTexto
             id="descricao"
             name="descricao"
+            rotulo="Descreva o problema"
+            placeholder="O que está acontecendo? Desde quando?"
             rows={4}
             required
             maxLength={4000}
-            aria-invalid={estado.erros?.descricao ? true : undefined}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 aria-invalid:border-red-500"
+            erro={estado.erros?.descricao}
           />
-          {estado.erros?.descricao ? <p className="text-xs text-red-600">{estado.erros.descricao}</p> : null}
-        </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="foto" className="text-sm font-medium text-zinc-800">
-            Foto (opcional)
-          </label>
-          <input
-            id="foto"
-            name="foto"
-            type="file"
-            accept="image/*"
-            className="text-sm text-zinc-700 file:mr-3 file:min-h-11 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-4 file:text-sm file:font-semibold file:text-zinc-800"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              setPrevia(f ? URL.createObjectURL(f) : undefined);
-            }}
-          />
-          {previa ? (
-            // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:), sem otimização
-            <img src={previa} alt="Prévia da foto" className="max-h-48 w-fit rounded-lg border border-zinc-200 object-contain" />
-          ) : null}
-          {erroFoto || estado.erros?.foto ? <p className="text-xs text-red-600">{erroFoto ?? estado.erros?.foto}</p> : null}
-        </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-stone-800">Foto (opcional)</span>
+            <input
+              ref={fotoRef}
+              id="foto"
+              name="foto"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                setPrevia(f ? URL.createObjectURL(f) : undefined);
+              }}
+            />
+            {previa ? (
+              <div className="relative w-fit">
+                {/* eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:), sem otimização */}
+                <img src={previa} alt="Prévia da foto" className="max-h-56 rounded-xl border border-stone-200 object-contain" />
+                <button
+                  type="button"
+                  aria-label="Remover foto"
+                  className="absolute -right-2 -top-2 grid h-8 w-8 place-items-center rounded-full bg-stone-900 text-white shadow"
+                  onClick={() => {
+                    if (fotoRef.current) fotoRef.current.value = "";
+                    setPrevia(undefined);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="foto"
+                className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-stone-300 bg-stone-50 text-sm text-stone-600 transition-colors hover:border-marca-300 hover:bg-marca-50 hover:text-marca-800"
+              >
+                <ImagePlus className="h-6 w-6" aria-hidden />
+                Tirar foto ou escolher da galeria
+              </label>
+            )}
+            {erroFoto || estado.erros?.foto ? <p className="text-xs font-medium text-red-600">{erroFoto ?? estado.erros?.foto}</p> : null}
+          </div>
+        </fieldset>
 
-        <Botao type="submit" disabled={ocupado} className="min-h-12 text-base">
+        <Botao type="submit" disabled={ocupado} icone={Send} className="min-h-12 text-base">
           {preparando ? "Preparando foto…" : pendente ? "Enviando…" : "Enviar chamado"}
         </Botao>
       </form>

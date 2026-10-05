@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PaginaPublica } from "@/components/pagina-publica";
 import { FormLogin } from "./form-login";
 
 export const metadata: Metadata = { title: "Entrar" };
@@ -14,12 +15,8 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
   const aviso = typeof motivo === "string" ? MENSAGENS[motivo] : undefined;
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Equipe de manutenção</h1>
-        <p className="mt-1 text-sm text-zinc-600">Entre com seu usuário ou matrícula.</p>
-      </div>
+    <PaginaPublica titulo="Área da equipe" subtitulo="Entre com seu usuário ou matrícula." largura="max-w-md">
       <FormLogin destino={destino} aviso={aviso} />
-    </main>
+    </PaginaPublica>
   );
 }

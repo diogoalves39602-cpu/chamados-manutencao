@@ -1,7 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Cartao } from "@/components/ui";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  Ban,
+  CalendarDays,
+  CircleCheck,
+  Clock,
+  Hand,
+  Hash,
+  History,
+  Inbox,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Repeat,
+  Sun,
+  Tag,
+  Timer,
+  User,
+  UserCheck,
+} from "lucide-react";
+import { IconeCategoria } from "@/components/icone-categoria";
+import { Cartao, Selo } from "@/components/ui";
 import { exigirEquipe } from "@/lib/auth/sessao";
 import { BUCKET_FOTOS } from "@/lib/chamados/constantes";
 import { SELECT_CHAMADO } from "@/lib/chamados/consultas";
@@ -17,13 +40,57 @@ export async function generateMetadata({ params }: PageProps<"/painel/[numero]">
   return { title: decodeURIComponent(numero) };
 }
 
-const ROTULO_ACAO: Record<string, string> = {
-  aberto: "Chamado aberto",
-  assumido: "Assumido",
-  reatribuido: "Reatribuído",
-  finalizado: "Finalizado",
-  cancelado: "Cancelado",
+const ACOES: Record<string, { rotulo: string; icone: LucideIcon; cor: string }> = {
+  aberto: { rotulo: "Chamado aberto", icone: Inbox, cor: "bg-sky-600" },
+  assumido: { rotulo: "Assumido", icone: Hand, cor: "bg-indigo-600" },
+  reatribuido: { rotulo: "Reatribuído", icone: Repeat, cor: "bg-violet-600" },
+  finalizado: { rotulo: "Finalizado", icone: CircleCheck, cor: "bg-emerald-600" },
+  cancelado: { rotulo: "Cancelado", icone: Ban, cor: "bg-stone-500" },
 };
+
+/** Links para contatar o solicitante: telefone (ligar/WhatsApp) ou e-mail. */
+function LinksContato({ contato }: { contato: string }) {
+  const email = contato.match(/[^\s@]+@[^\s@]+\.[^\s@]+/)?.[0];
+  const digitos = contato.replace(/\D/g, "");
+  const telefone = !email && digitos.length >= 8 ? digitos : null;
+  const whatsapp = telefone ? (telefone.length <= 11 ? `55${telefone}` : telefone) : null;
+  const classe =
+    "inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-semibold text-stone-700 hover:border-marca-300 hover:text-marca-800";
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1.5">
+      {telefone ? (
+        <a href={`tel:${telefone}`} className={classe}>
+          <Phone className="h-3.5 w-3.5" aria-hidden />
+          Ligar
+        </a>
+      ) : null}
+      {whatsapp ? (
+        <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className={classe}>
+          <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+          WhatsApp
+        </a>
+      ) : null}
+      {email ? (
+        <a href={`mailto:${email}`} className={classe}>
+          <Mail className="h-3.5 w-3.5" aria-hidden />
+          E-mail
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function Info({ icone: Icone, rotulo, children }: { icone: LucideIcon; rotulo: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <Icone className="mt-0.5 h-4 w-4 shrink-0 text-stone-400" aria-hidden />
+      <div className="min-w-0">
+        <dt className="text-xs font-medium text-stone-500">{rotulo}</dt>
+        <dd className="text-sm text-stone-900">{children}</dd>
+      </div>
+    </div>
+  );
+}
 
 export default async function DetalheChamado({ params }: PageProps<"/painel/[numero]">) {
   const perfil = await exigirEquipe();
@@ -54,67 +121,66 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
   const ativo = c.status === "aberto" || c.status === "em_andamento";
   const agora = new Date(); // Server Component: renderiza uma vez por requisição
 
-  const campos: [string, string][] = [
-    ["Solicitante", `${c.solicitante_nome} (${c.solicitante_setor})`],
-    ["Contato", c.solicitante_contato],
-    ["Local", c.local],
-    ["Categoria", c.categoria?.nome ?? "—"],
-    ["Origem", ROTULO_ORIGEM[c.origem]],
-    ["Turno", c.turno],
-    ["Aberto em", formatarDataHora(c.aberto_em)],
-    ["Prazo limite", `${formatarDataHora(c.prazo_limite)} (SLA ${formatarDuracao(c.sla_minutos)})`],
-    ["Recebido por", c.recebido ? `${c.recebido.nome} em ${formatarDataHora(c.recebido_em)}` : "—"],
-    ["Tempo até assumir", formatarDuracao(c.tempo_ate_assumir_minutos)],
-  ];
-  if (c.status === "finalizado") {
-    campos.push(
-      ["Finalizado por", `${c.finalizador?.nome ?? "—"} em ${formatarDataHora(c.finalizado_em)}`],
-      ["Tempo total", formatarDuracao(c.tempo_total_minutos)],
-      ["Situação do prazo", c.situacao_prazo ? ROTULO_SITUACAO[c.situacao_prazo] : "—"],
-    );
-  }
-  if (c.status === "cancelado") {
-    campos.push(["Cancelado por", `${c.cancelador?.nome ?? "—"} em ${formatarDataHora(c.cancelado_em)}`]);
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/painel" className="text-sm text-blue-700 hover:underline">
-        ← Voltar ao painel
+      <Link
+        href="/painel"
+        className="inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-200/60"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Voltar ao painel
       </Link>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="font-mono text-2xl font-bold text-zinc-900">{c.numero}</h1>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${COR_STATUS[c.status]}`}>
-          {ROTULO_STATUS[c.status]}
+      <Cartao className="flex flex-wrap items-center gap-4">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-marca-50 text-marca-700">
+          <IconeCategoria nome={c.categoria?.nome} className="h-7 w-7" />
         </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-mono text-xl font-bold text-marca-800">{c.numero}</h1>
+            <Selo className={COR_STATUS[c.status]}>{ROTULO_STATUS[c.status]}</Selo>
+            {c.situacao_prazo ? (
+              <Selo className={c.situacao_prazo === "dentro_do_prazo" ? "bg-emerald-100 text-emerald-800" : "bg-orange-100 text-orange-800"}>
+                {ROTULO_SITUACAO[c.situacao_prazo]}
+              </Selo>
+            ) : null}
+          </div>
+          <p className="mt-0.5 text-lg font-semibold text-stone-900">{c.local}</p>
+          <p className="text-sm text-stone-500">{c.categoria?.nome}</p>
+        </div>
         <ContadorPrazo
           chamado={{ status: c.status, prazo_limite: c.prazo_limite, situacao_prazo: c.situacao_prazo }}
           agoraServidor={agora.getTime()}
         />
-      </div>
+      </Cartao>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
+      <div className="grid gap-4 lg:grid-cols-[1fr_21rem]">
         <div className="flex flex-col gap-4">
           <Cartao>
-            <h2 className="mb-2 text-sm font-semibold text-zinc-500">Descrição</h2>
-            <p className="whitespace-pre-wrap text-base text-zinc-900">{c.descricao}</p>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">Descrição do problema</h2>
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-stone-900">{c.descricao}</p>
             {foto.data?.signedUrl ? (
-              <a href={foto.data.signedUrl} target="_blank" rel="noreferrer" className="mt-3 block">
+              <a href={foto.data.signedUrl} target="_blank" rel="noreferrer" className="mt-4 block w-fit">
                 {/* eslint-disable-next-line @next/next/no-img-element -- URL assinada temporária do Storage */}
-                <img src={foto.data.signedUrl} alt="Foto enviada pelo solicitante" className="max-h-80 rounded-lg border border-zinc-200" />
+                <img src={foto.data.signedUrl} alt="Foto enviada pelo solicitante" className="max-h-80 rounded-xl border border-stone-200" />
               </a>
             ) : null}
             {c.observacao_finalizacao ? (
-              <div className="mt-4 rounded-lg bg-green-50 p-3">
-                <h3 className="text-xs font-semibold text-green-800">Observação da finalização</h3>
-                <p className="whitespace-pre-wrap text-sm text-green-900">{c.observacao_finalizacao}</p>
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                <h3 className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+                  <CircleCheck className="h-3.5 w-3.5" aria-hidden />
+                  O que foi feito
+                </h3>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-emerald-950">{c.observacao_finalizacao}</p>
               </div>
             ) : null}
             {c.motivo_cancelamento ? (
-              <div className="mt-4 rounded-lg bg-zinc-100 p-3">
-                <h3 className="text-xs font-semibold text-zinc-600">Motivo do cancelamento</h3>
-                <p className="whitespace-pre-wrap text-sm">{c.motivo_cancelamento}</p>
+              <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-3">
+                <h3 className="flex items-center gap-1.5 text-xs font-semibold text-stone-600">
+                  <Ban className="h-3.5 w-3.5" aria-hidden />
+                  Motivo do cancelamento
+                </h3>
+                <p className="mt-1 whitespace-pre-wrap text-sm">{c.motivo_cancelamento}</p>
               </div>
             ) : null}
           </Cartao>
@@ -124,40 +190,86 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
           ) : null}
 
           <Cartao>
-            <h2 className="mb-3 font-semibold">Histórico</h2>
-            <ol className="relative flex flex-col gap-4 border-l-2 border-zinc-200 pl-4">
-              {historico?.map((h) => (
-                <li key={h.id} className="relative">
-                  <span className="absolute -left-[1.4rem] top-1.5 h-2.5 w-2.5 rounded-full bg-blue-600" aria-hidden />
-                  <p className="text-sm font-semibold text-zinc-900">
-                    {ROTULO_ACAO[h.acao] ?? h.acao}
-                    {h.status_de ? (
-                      <span className="font-normal text-zinc-500">
-                        {" "}
-                        · {ROTULO_STATUS[h.status_de]} → {ROTULO_STATUS[h.status_para]}
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    {formatarDataHora(h.criado_em)}
-                    {h.usuario ? ` · por ${h.usuario.nome}` : ""}
-                    {h.acao === "reatribuido" && h.responsavel ? ` · para ${h.responsavel.nome}` : ""}
-                  </p>
-                  {h.comentario ? <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-700">{h.comentario}</p> : null}
-                </li>
-              ))}
+            <h2 className="mb-4 flex items-center gap-2 font-semibold text-stone-900">
+              <History className="h-4 w-4 text-stone-500" aria-hidden />
+              Histórico
+            </h2>
+            <ol className="flex flex-col">
+              {historico?.map((h, i) => {
+                const acao = ACOES[h.acao] ?? ACOES.aberto;
+                const Icone = acao.icone;
+                const ultimo = i === (historico?.length ?? 0) - 1;
+                return (
+                  <li key={h.id} className="relative flex gap-3 pb-5 last:pb-0">
+                    {!ultimo ? <span className="absolute left-[15px] top-8 h-[calc(100%-2rem)] w-0.5 bg-stone-200" aria-hidden /> : null}
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-white ${acao.cor}`}>
+                      <Icone className="h-4 w-4" aria-hidden />
+                    </span>
+                    <div className="min-w-0 pt-0.5">
+                      <p className="text-sm font-semibold text-stone-900">
+                        {acao.rotulo}
+                        {h.acao === "reatribuido" && h.responsavel ? (
+                          <span className="font-normal text-stone-600"> para {h.responsavel.nome}</span>
+                        ) : null}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        {formatarDataHora(h.criado_em)}
+                        {h.usuario ? ` · por ${h.usuario.nome}` : ""}
+                      </p>
+                      {h.comentario ? (
+                        <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-stone-50 px-3 py-2 text-sm text-stone-700">{h.comentario}</p>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </Cartao>
         </div>
 
         <Cartao className="h-fit">
-          <dl className="flex flex-col gap-3">
-            {campos.map(([rotulo, valor]) => (
-              <div key={rotulo}>
-                <dt className="text-xs font-medium text-zinc-500">{rotulo}</dt>
-                <dd className="text-sm text-zinc-900">{valor}</dd>
-              </div>
-            ))}
+          <dl className="flex flex-col gap-4">
+            <Info icone={User} rotulo="Solicitante">
+              {c.solicitante_nome} · {c.solicitante_setor}
+              <span className="block text-stone-600">{c.solicitante_contato}</span>
+              <LinksContato contato={c.solicitante_contato} />
+            </Info>
+            <Info icone={MapPin} rotulo="Local">{c.local}</Info>
+            <Info icone={Tag} rotulo="Categoria · origem">
+              {c.categoria?.nome ?? "—"} · {ROTULO_ORIGEM[c.origem]}
+            </Info>
+            <Info icone={Sun} rotulo="Turno">{c.turno}</Info>
+            <hr className="border-stone-100" />
+            <Info icone={CalendarDays} rotulo="Aberto em">{formatarDataHora(c.aberto_em)}</Info>
+            <Info icone={Clock} rotulo="Prazo limite">
+              {formatarDataHora(c.prazo_limite)} <span className="text-stone-500">(SLA {formatarDuracao(c.sla_minutos)})</span>
+            </Info>
+            <Info icone={UserCheck} rotulo="Responsável">
+              {c.recebido ? (
+                <>
+                  {c.recebido.nome}
+                  <span className="block text-stone-500">
+                    assumiu em {formatarDataHora(c.recebido_em)} · {formatarDuracao(c.tempo_ate_assumir_minutos)} após abrir
+                  </span>
+                </>
+              ) : (
+                "Ninguém assumiu ainda"
+              )}
+            </Info>
+            {c.status === "finalizado" ? (
+              <Info icone={Timer} rotulo="Finalizado">
+                {formatarDataHora(c.finalizado_em)} por {c.finalizador?.nome ?? "—"}
+                <span className="block text-stone-500">Tempo total: {formatarDuracao(c.tempo_total_minutos)}</span>
+              </Info>
+            ) : null}
+            {c.status === "cancelado" ? (
+              <Info icone={Ban} rotulo="Cancelado">
+                {formatarDataHora(c.cancelado_em)} por {c.cancelador?.nome ?? "—"}
+              </Info>
+            ) : null}
+            <Info icone={Hash} rotulo="Número">
+              <span className="font-mono">{c.numero}</span>
+            </Info>
           </dl>
         </Cartao>
       </div>

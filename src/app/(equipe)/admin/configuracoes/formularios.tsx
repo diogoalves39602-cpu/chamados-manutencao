@@ -30,7 +30,7 @@ export function FormSla({ sla, alerta }: { sla: number; alerta: number }) {
 export function FormCategoria({ categoria }: { categoria: { id: number; nome: string; ativo: boolean; ordem: number } }) {
   const [estado, acao, pendente] = useActionState(salvarCategoria, {} as Estado);
   return (
-    <form onSubmit={enviarSemReset(acao)} className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3">
+    <form onSubmit={enviarSemReset(acao)} className="flex flex-col gap-2 rounded-lg border border-stone-200 p-3">
       <input type="hidden" name="id" value={categoria.id} />
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-40 flex-1">
@@ -79,7 +79,7 @@ export function EditorTurnos({ turnos }: { turnos: Omit<Turno, "chave">[] }) {
     <form onSubmit={enviarSemReset(acao)} className="flex flex-col gap-3">
       <Mensagens estado={estado} />
       {linhas.map((t, i) => (
-        <div key={t.chave} className="flex flex-wrap items-end gap-2 rounded-lg border border-zinc-200 p-3">
+        <div key={t.chave} className="flex flex-wrap items-end gap-2 rounded-lg border border-stone-200 p-3">
           <div className="min-w-36 flex-1">
             <Campo id={`tn-${t.chave}`} name="nome" rotulo="Nome" defaultValue={t.nome} required />
           </div>

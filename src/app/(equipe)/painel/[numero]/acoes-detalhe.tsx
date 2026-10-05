@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
+import { Ban, CircleCheck, Hand, Repeat } from "lucide-react";
 import { enviarSemReset } from "@/components/envio";
-import { Alerta, Botao, Cartao, Selecao } from "@/components/ui";
+import { AreaTexto, Alerta, Botao, Campo, Cartao, Selecao } from "@/components/ui";
 import type { Status } from "@/lib/chamados/rotulos";
 import {
   assumirChamado,
@@ -11,9 +12,6 @@ import {
   reatribuirChamado,
   type EstadoAcao,
 } from "../actions";
-
-const classeTexto =
-  "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200";
 
 export function AcoesDetalhe({
   chamadoId,
@@ -34,15 +32,15 @@ export function AcoesDetalhe({
   const ok = eAssumir.ok ?? eReatribuir.ok;
 
   return (
-    <Cartao className="flex flex-col gap-4">
-      <h2 className="font-semibold">Ações</h2>
+    <Cartao className="flex flex-col gap-5 border-marca-200">
+      <h2 className="font-semibold text-stone-900">Atendimento</h2>
       {erro ? <Alerta>{erro}</Alerta> : null}
       {ok ? <Alerta tipo="sucesso">{ok}</Alerta> : null}
 
       {status === "aberto" ? (
         <form action={assumir}>
           <input type="hidden" name="id" value={chamadoId} />
-          <Botao type="submit" disabled={assumindo} className="w-full sm:w-auto">
+          <Botao type="submit" disabled={assumindo} icone={Hand} className="min-h-12 w-full text-base sm:w-auto">
             {assumindo ? "Assumindo…" : "Assumir este chamado"}
           </Botao>
         </form>
@@ -50,22 +48,27 @@ export function AcoesDetalhe({
 
       <form onSubmit={enviarSemReset(finalizar)} className="flex flex-col gap-2">
         <input type="hidden" name="id" value={chamadoId} />
-        <label htmlFor="observacao" className="text-sm font-medium">
-          Finalizar: o que foi feito?
-        </label>
-        <textarea id="observacao" name="observacao" rows={3} required minLength={3} maxLength={2000} className={classeTexto} />
-        <Botao type="submit" disabled={finalizando}>
+        <AreaTexto
+          id="observacao"
+          name="observacao"
+          rotulo="Finalizar: o que foi feito?"
+          placeholder="Ex.: disjuntor trocado e circuito testado"
+          rows={3}
+          required
+          minLength={3}
+          maxLength={2000}
+        />
+        <Botao type="submit" disabled={finalizando} icone={CircleCheck} variante={status === "aberto" ? "secundario" : "primario"}>
           {finalizando ? "Finalizando…" : "Finalizar chamado"}
         </Botao>
       </form>
 
       {ehAdmin ? (
-        <div className="grid gap-4 border-t border-zinc-200 pt-4 sm:grid-cols-2">
+        <div className="grid gap-5 border-t border-stone-100 pt-5 sm:grid-cols-2">
           <form action={reatribuir} className="flex flex-col gap-2">
-            <input type="hidden" name="id" value={chamadoId} />
             <Selecao id="tecnico" name="tecnico" rotulo="Reatribuir para" required defaultValue="">
               <option value="" disabled>
-                Escolha…
+                Escolha o técnico…
               </option>
               {tecnicos.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -73,8 +76,9 @@ export function AcoesDetalhe({
                 </option>
               ))}
             </Selecao>
-            <input name="comentario" placeholder="Comentário (opcional)" maxLength={500} className={`${classeTexto} min-h-11`} />
-            <Botao type="submit" variante="secundario" disabled={reatribuindo}>
+            <input type="hidden" name="id" value={chamadoId} />
+            <Campo id="comentario" name="comentario" rotulo="Comentário (opcional)" maxLength={500} />
+            <Botao type="submit" variante="secundario" icone={Repeat} disabled={reatribuindo}>
               Reatribuir
             </Botao>
           </form>
@@ -89,11 +93,8 @@ export function AcoesDetalhe({
             }}
           >
             <input type="hidden" name="id" value={chamadoId} />
-            <label htmlFor="motivo" className="text-sm font-medium">
-              Cancelar (motivo obrigatório)
-            </label>
-            <textarea id="motivo" name="motivo" rows={2} required minLength={5} maxLength={1000} className={classeTexto} />
-            <Botao type="submit" variante="perigo" disabled={cancelando}>
+            <AreaTexto id="motivo" name="motivo" rotulo="Cancelar (motivo obrigatório)" rows={3} required minLength={5} maxLength={1000} />
+            <Botao type="submit" variante="perigo" icone={Ban} disabled={cancelando}>
               Cancelar chamado
             </Botao>
           </form>

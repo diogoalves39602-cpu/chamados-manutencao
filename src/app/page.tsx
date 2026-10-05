@@ -1,24 +1,61 @@
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import { ArrowRight, Search, ShieldCheck, Wrench } from "lucide-react";
+import { PaginaPublica } from "@/components/pagina-publica";
+
+function Opcao({
+  href,
+  icone: Icone,
+  titulo,
+  texto,
+  destaque = false,
+}: {
+  href: string;
+  icone: LucideIcon;
+  titulo: string;
+  texto: string;
+  destaque?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`group flex items-center gap-4 rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-600 ${
+        destaque ? "border-white/25 bg-marca-700 text-white shadow-lg shadow-marca-900/30 ring-1 ring-black/5" : "border-stone-200 bg-white text-stone-900"
+      }`}
+    >
+      <span
+        className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${
+          destaque ? "bg-white/15 text-white" : "bg-marca-50 text-marca-700"
+        }`}
+      >
+        <Icone className="h-6 w-6" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-base font-semibold">{titulo}</span>
+        <span className={`block text-sm ${destaque ? "text-marca-100" : "text-stone-500"}`}>{texto}</span>
+      </span>
+      <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden />
+    </Link>
+  );
+}
 
 export default function Inicio() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Chamados de Manutenção</h1>
-        <p className="mt-1 text-sm text-zinc-600">Todo chamado é atendido em até 2 horas, 24h por dia.</p>
+    <PaginaPublica
+      titulo="Como podemos ajudar?"
+      subtitulo="Problema de manutenção? Abra um chamado: a equipe atende em até 2 horas, 24h por dia."
+    >
+      <div className="flex flex-col gap-3 animate-entrar">
+        <Opcao href="/abrir-chamado" icone={Wrench} titulo="Abrir um chamado" texto="Elétrica, hidráulica, ar, TI e mais" destaque />
+        <Opcao href="/acompanhar" icone={Search} titulo="Acompanhar meu chamado" texto="Consulte o status pelo número" />
       </div>
       <Link
-        href="/abrir-chamado"
-        className="flex min-h-14 items-center justify-center rounded-xl bg-blue-700 px-4 text-base font-semibold text-white hover:bg-blue-800"
-      >
-        Abrir um chamado
-      </Link>
-      <Link
         href="/login"
-        className="flex min-h-11 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
+        className="mx-auto mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-200/60 hover:text-stone-800"
       >
+        <ShieldCheck className="h-4 w-4" aria-hidden />
         Área da equipe de manutenção
       </Link>
-    </main>
+    </PaginaPublica>
   );
 }

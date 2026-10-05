@@ -145,6 +145,9 @@ o sistema vai pedir a troca da senha. Os demais usuários são criados pelo `/ad
 - **Anti-spam**: campo invisível para robôs (honeypot) e limite de 6 chamados a cada
   10 minutos por IP.
 - Nome, setor e contato ficam lembrados no aparelho para o próximo chamado.
+- **Acompanhar** (`/acompanhar`): o solicitante consulta o andamento informando o número **e** o
+  telefone/e-mail usado na abertura (impede que alguém veja chamados alheios chutando números).
+  Mostra recebido → em atendimento → concluído, com o que foi feito.
 - **QR Code**: `/admin/qrcode` gera um cartaz pronto para imprimir e o link para divulgar
   nos grupos do Feishu e do Lark. Defina `APP_URL` para o QR apontar para o endereço
   definitivo.
@@ -241,6 +244,18 @@ O processo é o mesmo, no ambiente do Lark:
   aviso no topo, título da aba piscando e notificação do sistema (se permitida).
 - O relógio do contador é alinhado ao do servidor, porque o relógio do celular pode
   estar errado.
+
+### Instalar no celular (app)
+
+O sistema tem manifest e ícone próprios: no Android (Chrome) use **⋮ → Instalar app**; no iPhone
+(Safari) use **Compartilhar → Adicionar à Tela de Início**. Abre direto no painel, em tela cheia.
+
+### Identidade visual
+
+A cor da marca (vermelho) fica em `src/app/globals.css` (escala `--color-marca-*`). Para trocar a
+cor do sistema inteiro, altere só essa escala. Chamado **atrasado** usa vermelho também, mas sempre
+com fundo, ícone de alerta e a palavra "Atrasado", para não depender só da cor. Os gráficos usam
+azul e laranja (validados para daltonismo) de propósito.
 
 ## 8. Dashboard e Excel
 

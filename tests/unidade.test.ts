@@ -111,3 +111,11 @@ test("planilha: abas, cabeçalhos e datas no fuso de São Paulo", () => {
   assert.match(texto, /05\/10\/2026/);
   assert.match(texto, /Por turno/);
 });
+
+test("iniciais do avatar ignoram parênteses e sufixos", async () => {
+  const { iniciais } = await import("../src/lib/iniciais");
+  assert.equal(iniciais("Carlos Mendes (exemplo)"), "CM");
+  assert.equal(iniciais("Diogo"), "D");
+  assert.equal(iniciais("ana maria de souza"), "AS");
+  assert.equal(iniciais("  "), "?");
+});

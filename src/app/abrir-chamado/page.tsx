@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PaginaPublica } from "@/components/pagina-publica";
 import { descreverSla } from "@/lib/chamados/rotulos";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -25,17 +26,13 @@ export default async function PaginaAbrirChamado() {
     supabase.from("categorias").select("id, nome").eq("ativo", true).order("ordem").order("nome"),
     slaMinutos(),
   ]);
-  const prazo = descreverSla(sla);
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-6">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Abrir chamado de manutenção</h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          A equipe atende 24 horas por dia. Prazo de solução: até {prazo} após a abertura.
-        </p>
-      </div>
+    <PaginaPublica
+      titulo="Abrir chamado"
+      subtitulo={`A equipe atende 24 horas por dia. Prazo de solução: até ${descreverSla(sla)} após a abertura.`}
+    >
       <FormAbrirChamado categorias={categorias ?? []} />
-    </main>
+    </PaginaPublica>
   );
 }

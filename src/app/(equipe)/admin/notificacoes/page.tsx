@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Botao, Cartao } from "@/components/ui";
+import { Bell } from "lucide-react";
+import { Botao, CabecalhoPagina, Cartao } from "@/components/ui";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { alternarDestino, excluirDestino } from "./actions";
 import { BotaoTeste, FormNovoDestino } from "./formularios";
@@ -18,13 +19,16 @@ export default async function PaginaNotificacoes() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-900">Notificações no Feishu e no Lark</h1>
-        <p className="text-sm text-zinc-600">
-          Cada mensagem vai para <strong>todos os destinos ativos</strong>: novo chamado e alerta quando faltarem{" "}
-          {config?.alerta_minutos_antes ?? 30} minutos para estourar o prazo. Funciona 24h, inclusive de madrugada.
-        </p>
-      </div>
+      <CabecalhoPagina
+        icone={Bell}
+        titulo="Notificações no Feishu e no Lark"
+        subtitulo={
+          <>
+            Cada mensagem vai para <strong>todos os destinos ativos</strong>: novo chamado e alerta quando faltarem{" "}
+            {config?.alerta_minutos_antes ?? 30} minutos para estourar o prazo. Funciona 24h, inclusive de madrugada.
+          </>
+        }
+      />
 
       <Cartao>
         <h2 className="mb-4 font-semibold">Novo destino (bot customizado de grupo)</h2>
@@ -32,16 +36,16 @@ export default async function PaginaNotificacoes() {
       </Cartao>
 
       <Cartao className="p-0 sm:p-0">
-        <h2 className="border-b border-zinc-200 px-4 py-3 font-semibold sm:px-6">Destinos</h2>
+        <h2 className="border-b border-stone-200 px-4 py-3 font-semibold sm:px-6">Destinos</h2>
         {!destinos?.length ? (
-          <p className="px-4 py-4 text-sm text-zinc-500 sm:px-6">Nenhum destino cadastrado: nenhuma mensagem será enviada.</p>
+          <p className="px-4 py-4 text-sm text-stone-500 sm:px-6">Nenhum destino cadastrado: nenhuma mensagem será enviada.</p>
         ) : null}
-        <ul className="divide-y divide-zinc-200">
+        <ul className="divide-y divide-stone-200">
           {destinos?.map((d) => (
             <li key={d.id} className="flex flex-col gap-3 px-4 py-4 sm:px-6">
               <div className="flex flex-wrap items-center gap-2">
-                <p className={`flex-1 font-medium ${d.ativo ? "" : "text-zinc-400"}`}>{d.nome}</p>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
+                <p className={`flex-1 font-medium ${d.ativo ? "" : "text-stone-400"}`}>{d.nome}</p>
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-700">
                   {d.plataforma === "feishu" ? "Feishu" : "Lark"}
                 </span>
                 <span
@@ -51,9 +55,9 @@ export default async function PaginaNotificacoes() {
                 >
                   {d.secret_assinatura ? "Com assinatura" : "Sem assinatura"}
                 </span>
-                {!d.ativo ? <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-semibold">Pausado</span> : null}
+                {!d.ativo ? <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-semibold">Pausado</span> : null}
               </div>
-              <p className="break-all font-mono text-xs text-zinc-500">
+              <p className="break-all font-mono text-xs text-stone-500">
                 {d.webhook_url.replace(/hook\/(.{6}).*$/, "hook/$1…")}
               </p>
               <div className="flex flex-wrap gap-2">

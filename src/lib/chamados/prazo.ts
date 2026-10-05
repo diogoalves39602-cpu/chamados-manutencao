@@ -2,11 +2,13 @@ import type { SituacaoPrazo, Status } from "./rotulos";
 
 export type CorPrazo = "verde" | "amarelo" | "vermelho" | "neutro";
 
-export const CLASSES_PRAZO: Record<CorPrazo, { borda: string; selo: string }> = {
-  verde: { borda: "border-l-green-500", selo: "bg-green-100 text-green-800" },
-  amarelo: { borda: "border-l-amber-400", selo: "bg-amber-100 text-amber-900" },
-  vermelho: { borda: "border-l-red-600", selo: "bg-red-600 text-white" },
-  neutro: { borda: "border-l-zinc-300", selo: "bg-zinc-100 text-zinc-700" },
+// O vermelho também é a cor da marca: por isso "atrasado" leva fundo, selo sólido,
+// ícone de alerta e a palavra "Atrasado" (nunca depende só da cor).
+export const CLASSES_PRAZO: Record<CorPrazo, { borda: string; selo: string; fundo: string }> = {
+  verde: { borda: "border-l-emerald-500", selo: "bg-emerald-100 text-emerald-800", fundo: "bg-white" },
+  amarelo: { borda: "border-l-amber-400", selo: "bg-amber-100 text-amber-900", fundo: "bg-white" },
+  vermelho: { borda: "border-l-red-600", selo: "bg-red-600 text-white shadow-sm shadow-red-600/30", fundo: "bg-red-50/70" },
+  neutro: { borda: "border-l-stone-300", selo: "bg-stone-100 text-stone-700", fundo: "bg-white" },
 };
 
 /** "01:05:09" ou "05:09" */

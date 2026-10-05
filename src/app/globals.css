@@ -5,8 +5,54 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+ * Cor da marca (vermelho). Use as classes bg-marca-*, text-marca-*, etc.
+ * Para trocar a identidade visual, altere só esta escala.
+ * Botões e cabeçalho usam marca-700 (contraste 6,5:1 com texto branco).
+ */
+@theme {
+  --color-marca-50: #fef2f2;
+  --color-marca-100: #fee2e2;
+  --color-marca-200: #fecaca;
+  --color-marca-300: #fca5a5;
+  --color-marca-400: #f87171;
+  --color-marca-500: #ef4444;
+  --color-marca-600: #dc2626;
+  --color-marca-700: #b91c1c;
+  --color-marca-800: #991b1b;
+  --color-marca-900: #7f1d1d;
+  --color-marca-950: #450a0a;
+
+  --animate-entrar: entrar 0.25s ease-out;
+
+  @keyframes entrar {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 body {
-  background: #f4f5f7;
-  color: #1f2328;
+  background: #f6f4f3;
+  color: #1c1917;
   font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fundo da faixa vermelha das páginas públicas e do cabeçalho. */
+.fundo-marca {
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 0.12) 0%, transparent 55%),
+    linear-gradient(135deg, var(--color-marca-800) 0%, var(--color-marca-700) 55%, var(--color-marca-600) 100%);
+}
+
+@media print {
+  body {
+    background: white;
+  }
 }
