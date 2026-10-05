@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "criar-admin": "tsx --env-file=.env.local scripts/criar-admin.ts",
+    "criar-admin": "tsx --env-file=.env.local scripts/criar-admin.mts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts tests/*.test.tsx"
   },
