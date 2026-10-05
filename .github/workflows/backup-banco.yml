@@ -1,0 +1,60 @@
+# Backup semanal do banco (o plano Free do Supabase não tem backup automático).
+# Gera dump de papéis, esquema e dados com a Supabase CLI (pg_dump por baixo),
+# criptografa com AES-256 e guarda como artifact do GitHub por 90 dias.
+#
+# Secrets necessários (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL     string de conexão do Session pooler (porta 5432)
+#   BACKUP_PASSPHRASE   senha longa para criptografar o arquivo
+name: Backup semanal do banco
+
+on:
+  schedule:
+    - cron: "0 6 * * 0" # domingo 06:00 UTC = 03:00 em São Paulo
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-banco
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump (papéis, esquema e dados)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p backup
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/data.sql --use-copy --data-only
+          ls -lh backup
+
+      - name: Compactar e criptografar
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_PASSPHRASE" || { echo "Secret BACKUP_PASSPHRASE não configurado"; exit 1; }
+          NOME="chamados-$(date -u +%Y-%m-%d)"
+          echo "NOME=$NOME" >> "$GITHUB_ENV"
+          tar -czf "$NOME.tar.gz" -C backup .
+          gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 \
+              --passphrase "$BACKUP_PASSPHRASE" -o "$NOME.tar.gz.gpg" "$NOME.tar.gz"
+          rm -rf backup "$NOME.tar.gz"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NOME }}
+          path: ${{ env.NOME }}.tar.gz.gpg
+          retention-days: 90
+          if-no-files-found: error

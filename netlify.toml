@@ -1,0 +1,8 @@
+# Produção no Netlify (plano gratuito). O Netlify detecta Next.js e aplica o
+# adaptador OpenNext automaticamente; nada específico de Vercel é usado no código.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24"
