@@ -3,10 +3,9 @@ import { randomUUID } from "node:crypto";
 import { after } from "next/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { notificarNovos } from "@/lib/notificacoes/enviar";
+import { BUCKET_FOTOS } from "./constantes";
 import type { NovoChamado } from "./validacao";
 import type { Origem } from "./rotulos";
-
-export const BUCKET_FOTOS = "fotos-chamados";
 
 const EXTENSAO: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
