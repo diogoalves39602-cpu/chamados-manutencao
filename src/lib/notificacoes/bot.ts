@@ -1,4 +1,3 @@
-import "server-only";
 import { createHmac } from "node:crypto";
 
 // Bot customizado de grupo do Feishu (open.feishu.cn) e do Lark

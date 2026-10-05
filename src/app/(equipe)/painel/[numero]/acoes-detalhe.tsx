@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { enviarSemReset } from "@/components/envio";
 import { Alerta, Botao, Cartao, Selecao } from "@/components/ui";
 import type { Status } from "@/lib/chamados/rotulos";
 import {
@@ -47,7 +48,7 @@ export function AcoesDetalhe({
         </form>
       ) : null}
 
-      <form action={finalizar} className="flex flex-col gap-2">
+      <form onSubmit={enviarSemReset(finalizar)} className="flex flex-col gap-2">
         <input type="hidden" name="id" value={chamadoId} />
         <label htmlFor="observacao" className="text-sm font-medium">
           Finalizar: o que foi feito?
@@ -78,12 +79,13 @@ export function AcoesDetalhe({
             </Botao>
           </form>
           <form
-            action={cancelar}
             className="flex flex-col gap-2"
             onSubmit={(e) => {
               if (!confirm("Cancelar este chamado? Cancelados não entram no cálculo de SLA e não podem ser reabertos.")) {
                 e.preventDefault();
+                return;
               }
+              enviarSemReset(cancelar)(e);
             }}
           >
             <input type="hidden" name="id" value={chamadoId} />

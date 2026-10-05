@@ -29,14 +29,16 @@ export function segredoConfere(recebido: string | null | undefined, esperado: st
  * Em caso de erro no banco, deixa passar (não derruba o atendimento).
  */
 export async function dentroDoLimite(chave: string, max: number, janelaSegundos: number) {
-  const { data, error } = await criarClienteAdmin().rpc("consumir_limite", {
-    p_chave: chave,
-    p_max: max,
-    p_janela_segundos: janelaSegundos,
-  });
-  if (error) {
-    console.error("consumir_limite falhou", error.message);
+  try {
+    const { data, error } = await criarClienteAdmin().rpc("consumir_limite", {
+      p_chave: chave,
+      p_max: max,
+      p_janela_segundos: janelaSegundos,
+    });
+    if (error) throw new Error(error.message);
+    return data === true;
+  } catch (e) {
+    console.error("consumir_limite falhou (requisição liberada):", e);
     return true;
   }
-  return data === true;
 }

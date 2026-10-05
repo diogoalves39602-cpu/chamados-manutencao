@@ -375,6 +375,7 @@ export type Database = {
       reatribuir_chamado: RetornoChamado & {
         Args: { p_chamado_id: string; p_comentario?: string; p_tecnico_id: string }
       }
+      salvar_turnos: { Args: { p_turnos: Json }; Returns: undefined }
       rotulo_status: {
         Args: { p_status: Database["public"]["Enums"]["status_chamado"] }
         Returns: string

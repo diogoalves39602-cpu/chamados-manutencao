@@ -1,13 +1,13 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef, type FormEvent } from "react";
+import { useActionState, useEffect, useRef } from "react";
+import { enviarSemReset } from "@/components/envio";
 import { Alerta, Botao, Campo, Selecao } from "@/components/ui";
 import { criarUsuario, type EstadoForm } from "./actions";
 import { gerarSenha } from "./senha";
 import { SenhaGerada } from "./senha-gerada";
 
-// onSubmit + startTransition (em vez de <form action>) para o React não limpar
-// os campos quando a validação falha; limpamos só no sucesso.
+// Sem o reset automático do React: os campos só são limpos no sucesso.
 export function FormNovoUsuario({ senhaInicial }: { senhaInicial: string }) {
   const [estado, acao, pendente] = useActionState(criarUsuario, {} as EstadoForm);
   const formRef = useRef<HTMLFormElement>(null);
@@ -19,14 +19,8 @@ export function FormNovoUsuario({ senhaInicial }: { senhaInicial: string }) {
     senhaRef.current.value = gerarSenha();
   }, [estado]);
 
-  function enviar(evento: FormEvent<HTMLFormElement>) {
-    evento.preventDefault();
-    const dados = new FormData(evento.currentTarget);
-    startTransition(() => acao(dados));
-  }
-
   return (
-    <form ref={formRef} onSubmit={enviar} className="grid gap-4 sm:grid-cols-2">
+    <form ref={formRef} onSubmit={enviarSemReset(acao)} className="grid gap-4 sm:grid-cols-2">
       {estado.erro ? (
         <div className="sm:col-span-2">
           <Alerta>{estado.erro}</Alerta>

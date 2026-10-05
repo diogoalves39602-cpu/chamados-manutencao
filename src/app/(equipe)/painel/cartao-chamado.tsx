@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { enviarSemReset } from "@/components/envio";
 import { Alerta, Botao } from "@/components/ui";
 import { CLASSES_PRAZO, estadoPrazo } from "@/lib/chamados/prazo";
 import type { ChamadoCompleto } from "@/lib/chamados/tipos";
@@ -102,7 +103,7 @@ function AcoesRapidas({ chamado: c }: { chamado: ChamadoCompleto }) {
         </Link>
       </div>
       {abrirFinalizar ? (
-        <form action={finalizar} className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+        <form onSubmit={enviarSemReset(finalizar)} className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
           <input type="hidden" name="id" value={c.id} />
           <label htmlFor={`obs-${c.id}`} className="text-sm font-medium">
             O que foi feito?
