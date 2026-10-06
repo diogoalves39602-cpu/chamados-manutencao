@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { exigirAdmin, exigirEquipe } from "@/lib/auth/sessao";
-import { dadosModelo, textoReprovado } from "@/lib/chamados/modelos-mensagem";
-import { enviarMensagemUsuario, explicarErroFeishu } from "@/lib/notificacoes/feishu-usuario";
-import { configPlataforma, ehPlataforma } from "@/lib/solicitante/plataformas";
+import { dadosModelo, textoConcluido, textoReprovado } from "@/lib/chamados/modelos-mensagem";
+import { avisarSolicitante } from "@/lib/solicitante/avisar";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { urlBase } from "@/lib/url";
 
@@ -35,7 +35,7 @@ export async function assumirChamado(_: EstadoAcao, formData: FormData): Promise
 }
 
 export async function finalizarChamado(_: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
-  await exigirEquipe();
+  const eu = await exigirEquipe();
   const chamadoId = id.safeParse(formData.get("id"));
   const observacao = z.string().trim().min(3, "Descreva o que foi feito (mínimo 3 caracteres).").max(2000)
     .safeParse(formData.get("observacao"));
@@ -48,8 +48,14 @@ export async function finalizarChamado(_: EstadoAcao, formData: FormData): Promi
     p_observacao: observacao.data,
   });
   if (error) return { erro: error.message };
+
+  // Quem abriu pelo Feishu recebe "concluído + o que foi feito" (em segundo plano).
+  const base = await urlBase();
+  after(() => avisarSolicitante(data, textoConcluido(dadosModelo(data, base)), eu.id));
+
   const situacao = data.situacao_prazo === "dentro_do_prazo" ? "dentro do prazo" : "fora do prazo";
-  return concluir(data.numero, `${data.numero} finalizado ${situacao}.`);
+  const aviso = data.solicitante_externo_id ? " Quem abriu recebe o aviso no Feishu." : "";
+  return concluir(data.numero, `${data.numero} finalizado ${situacao}.${aviso}`);
 }
 
 export async function reatribuirChamado(_: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
@@ -90,27 +96,8 @@ export async function reprovarChamado(_: EstadoAcao, formData: FormData): Promis
   });
   if (error) return { erro: error.message.replace(/cancelamento/g, "reprovação") };
 
-  let aviso: "feishu" | "falhou" | "manual" = "manual";
-  const cfg = ehPlataforma(data.solicitante_plataforma) ? configPlataforma(data.solicitante_plataforma) : null;
-  if (cfg && data.solicitante_externo_id) {
-    const texto = textoReprovado(dadosModelo(data, await urlBase()));
-    let falha: string | undefined;
-    try {
-      await enviarMensagemUsuario(cfg, data.solicitante_externo_id, texto);
-    } catch (e) {
-      console.error("aviso de reprovação:", e);
-      falha = explicarErroFeishu(e);
-    }
-    await supabase.from("mensagens_solicitante").insert({
-      chamado_id: data.id,
-      canal: "feishu",
-      texto,
-      status: falha ? "falhou" : "enviada",
-      erro: falha ?? null,
-      enviado_por: eu.id,
-    });
-    aviso = falha ? "falhou" : "feishu";
-  }
+  const enviado = await avisarSolicitante(data, textoReprovado(dadosModelo(data, await urlBase())), eu.id);
+  const aviso = enviado === "enviada" ? "feishu" : enviado === "falhou" ? "falhou" : "manual";
 
   revalidatePath("/painel");
   revalidatePath(`/painel/${data.numero}`);

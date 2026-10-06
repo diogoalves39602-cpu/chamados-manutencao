@@ -35,6 +35,9 @@ Realtime, Storage, pg_cron) · Zod · SheetJS. Roda inteiramente em planos gratu
 13. [Backup e limites do plano gratuito](#13-backup-e-limites-do-plano-gratuito)
 14. [Deploy (Vercel e Netlify)](#14-deploy-vercel-e-netlify)
 15. [Login com Feishu/Lark para quem abre chamado](#15-login-com-feishulark-para-quem-abre-chamado)
+16. [Admin → Chamados e mensagens ao solicitante](#16-admin--chamados-e-mensagens-ao-solicitante)
+17. [Reprovar chamado e avisos automáticos](#17-reprovar-chamado-e-avisos-automáticos)
+18. [Continuar em outro computador](#18-continuar-em-outro-computador)
 
 ---
 
@@ -140,8 +143,10 @@ o sistema vai pedir a troca da senha. Os demais usuários são criados pelo `/ad
 
 ## 5. Abertura de chamados: formulário e QR Code
 
-- **`/abrir-chamado`** é público, sem login e pensado para celular. Campos: nome, setor,
-  contato, local, categoria, descrição e foto opcional. Ao enviar, mostra o **número** e
+- **`/abrir-chamado`** é público e pensado para celular. Campos: nome, setor,
+  contato, local, categoria, descrição e foto opcional. **Obrigatório: entrar com o Feishu
+  ou informar telefone com DDD / e-mail válido** (texto livre como "ramal 20" é recusado).
+  Quem entra com o Feishu tem o nome preenchido pela conta e o contato vira opcional. Ao enviar, mostra o **número** e
   o **prazo limite**.
 - **Foto**: o próprio celular reduz a imagem (lado maior de 1600px, JPEG) antes do envio,
   então uma foto de 4–8 MB vira cerca de 0,3 MB. Ela fica num bucket **privado** (só a
@@ -152,7 +157,9 @@ o sistema vai pedir a troca da senha. Os demais usuários são criados pelo `/ad
 - **Acompanhar** (`/acompanhar`): não precisa do número do chamado. A pessoa pode **entrar com o Feishu**
   (lista "Seus chamados") ou informar o **telefone ou e-mail** usado na abertura (lista todos os chamados
   com aquele contato). O telefone é comparado pelos dígitos, com ou sem +55, DDD, espaços ou traços. Há
-  limite de 10 consultas a cada 10 minutos por aparelho, e a lista mostra só o andamento, nunca o contato.
+  limite de 10 consultas a cada 10 minutos por aparelho. Cada chamado abre ao tocar e mostra o problema
+  informado, a foto, quem atendeu (só o primeiro nome), a linha do tempo e **o que foi feito** ou **o
+  motivo da reprovação**. O contato de ninguém aparece.
 - **QR Code**: `/admin/qrcode` gera um cartaz pronto para imprimir e o link para divulgar
   nos grupos do Feishu e do Lark. Defina `APP_URL` para o QR apontar para o endereço
   definitivo.
@@ -327,7 +334,11 @@ Erros comuns no teste:
 | Código | Significado |
 |---|---|
 | `19021` | assinatura inválida: confira o secret e se o relógio do servidor está certo |
-| `19024` | o bot está configurado com palavra-chave: troque para assinatura |
+| `19024` | o bot está configurado com palavra-chave. Troque para assinatura ou use a palavra-chave `chamado` (todo cartão tem "chamado" no título e o rodapé "Sistema de chamados de manutenção") |
+
+Depois de mudar a segurança do bot no Feishu, clique em **Salvar** na janela "Detalhes do bot".
+Para conferir que a assinatura está valendo, um POST **sem** assinatura no webhook precisa ser
+recusado (`19021`); se ele for aceito, a verificação não está ativa no Feishu.
 
 ## 10. Alerta de prazo 24/7 (pg_cron)
 
@@ -520,7 +531,7 @@ retorno `https://chamados-manutencao.netlify.app/auth/lark/retorno` e as variáv
   filtros (status, período, identificação) e exportação Excel. Cada linha mostra o solicitante, o
   contato e, quando ele entrou com o Feishu/Lark, o selo de verificado e o **ID do Feishu** (open_id).
 - **Enviar mensagem ao solicitante** (tela do chamado, para toda a equipe): modelos prontos
-  ("Recebemos", "Técnico a caminho", "Preciso de informações", "Concluído") ou texto livre.
+  ("Recebemos", "Técnico a caminho", "Preciso de informações", "Concluído", "Reprovado") ou texto livre.
   - **Feishu/Lark:** enviada direto pelo bot do app da empresa, só para quem abriu o chamado
     identificado. Grátis.
   - **WhatsApp:** abre a conversa (wa.me) com o texto pronto, e quem atende toca em enviar. A API
@@ -536,3 +547,32 @@ retorno `https://chamados-manutencao.netlify.app/auth/lark/retorno` e as variáv
 
 Até isso ser feito, o botão "Enviar pelo Feishu" mostra o motivo do erro, por exemplo "o app ainda
 não tem o recurso Bot ativado", e a mensagem fica registrada como "Falhou".
+
+## 17. Reprovar chamado e avisos automáticos
+
+- **Reprovar** (só administradores): botão no cartão do painel e na tela do chamado, com motivo
+  obrigatório. No banco o status continua `cancelado`; na tela, no Excel e para o solicitante ele
+  aparece como **Reprovado**. Reprovados não entram no cálculo de SLA e aparecem em Indicadores
+  (cartão "Reprovados" e lista "Chamados reprovados no período", com o motivo).
+- **Aviso ao solicitante** (pelo bot do app do Feishu, registrado em "Mensagens enviadas"):
+  - ao **reprovar**: "foi reprovado… Motivo: …". Se a pessoa não entrou com o Feishu (ou o envio
+    falhar), a tela do chamado abre com a mensagem pronta para o WhatsApp;
+  - ao **finalizar**: "foi concluído. O que foi feito: …", enviado em segundo plano.
+- Enquanto o app do Feishu não estiver liberado para todos os funcionários, o aviso só chega para
+  quem está no "Available range" do app; para os demais, o registro fica como "Falhou" com o motivo.
+
+## 18. Continuar em outro computador
+
+Nada depende de um PC específico: o código está no GitHub (repositório privado), o banco, os usuários
+e as fotos no Supabase, o site no Netlify (publica sozinho a cada `git push` na `main`) e os alertas
+de prazo rodam no próprio banco (pg_cron).
+
+1. Instale as ferramentas: `winget install Git.Git OpenJS.NodeJS.LTS GitHub.cli`.
+2. `gh auth login` e `gh repo clone diogoalves39602-cpu/chamados-manutencao`.
+3. Na pasta do projeto: `npm install`.
+4. Copie o **`.env.local`** do PC antigo por meio seguro (pendrive, gerenciador de senhas). Ele
+   não vai para o Git e tem a chave mestra do banco. Sem ele, monte de novo a partir do
+   `.env.example` (seção 2).
+5. `npm run dev` para rodar local, ou só edite e faça `git push` para publicar.
+
+Antes de mexer em um PC, rode `git pull` para trazer o que foi feito no outro.

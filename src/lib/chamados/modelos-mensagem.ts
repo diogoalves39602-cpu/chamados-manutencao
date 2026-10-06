@@ -2,7 +2,7 @@ import { formatarDataHora } from "@/lib/datas";
 
 // Modelos de mensagem para o solicitante (editáveis antes de enviar).
 const comPonto = (t: string) => (/[.!?]$/.test(t) ? t : `${t}.`);
-export type DadosModelo = { numero: string; nome: string; local: string; prazo: string; link: string; motivo?: string };
+export type DadosModelo = { numero: string; nome: string; local: string; prazo: string; link: string; motivo?: string; feito?: string };
 
 export const MODELOS_MENSAGEM: { id: string; rotulo: string; texto: (d: DadosModelo) => string }[] = [
   {
@@ -25,7 +25,7 @@ export const MODELOS_MENSAGEM: { id: string; rotulo: string; texto: (d: DadosMod
     id: "concluido",
     rotulo: "Concluído",
     texto: (d) =>
-      `Olá, ${d.nome}! Seu chamado ${d.numero} (${d.local}) foi concluído. Se o problema continuar, é só abrir um novo chamado em ${d.link}`,
+      `Olá, ${d.nome}! Seu chamado ${d.numero} (${d.local}) foi concluído.${d.feito ? ` O que foi feito: ${comPonto(d.feito)}` : ""} Se o problema continuar, é só abrir um novo chamado em ${d.link}`,
   },
   {
     id: "reprovado",
@@ -35,11 +35,14 @@ export const MODELOS_MENSAGEM: { id: string; rotulo: string; texto: (d: DadosMod
   },
 ];
 
+/** Texto avisando o solicitante de que o chamado foi concluído (com o que foi feito). */
+export const textoConcluido = (d: DadosModelo) => MODELOS_MENSAGEM.find((m) => m.id === "concluido")!.texto(d);
+
 /** Texto avisando o solicitante de que o chamado foi reprovado. */
 export const textoReprovado = (d: DadosModelo) => MODELOS_MENSAGEM.find((m) => m.id === "reprovado")!.texto(d);
 
 export function dadosModelo(
-  c: { numero: string; solicitante_nome: string; local: string; prazo_limite: string; motivo_cancelamento?: string | null },
+  c: { numero: string; solicitante_nome: string; local: string; prazo_limite: string; motivo_cancelamento?: string | null; observacao_finalizacao?: string | null },
   link: string,
 ): DadosModelo {
   return {
@@ -49,5 +52,6 @@ export function dadosModelo(
     prazo: formatarDataHora(c.prazo_limite),
     link,
     motivo: c.motivo_cancelamento?.trim() || undefined,
+    feito: c.observacao_finalizacao?.trim() || undefined,
   };
 }

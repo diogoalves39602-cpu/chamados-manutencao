@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emailDe, linkWhatsapp, numeroWhatsapp, telefoneDe } from "../src/lib/contato";
 import { enviarMensagemUsuario, ErroFeishu, explicarErroFeishu } from "../src/lib/notificacoes/feishu-usuario";
-import { dadosModelo, MODELOS_MENSAGEM, textoReprovado } from "../src/lib/chamados/modelos-mensagem";
+import { dadosModelo, MODELOS_MENSAGEM, textoConcluido, textoReprovado } from "../src/lib/chamados/modelos-mensagem";
 import type { ConfigPlataforma } from "../src/lib/solicitante/plataformas";
 
 test("contato: telefone, e-mail e link do WhatsApp", () => {
@@ -97,4 +97,15 @@ test("todo cartão do grupo leva a palavra-chave \"chamado\" no título (bots co
     assert.match((cartao as { header: { title: { content: string } } }).header.title.content, /chamado/);
     assert.match(JSON.stringify((cartao as { elements: unknown[] }).elements), /chamados de manutenção/);
   }
+});
+
+test("mensagem de concluído leva o que foi feito", () => {
+  const d = dadosModelo(
+    { numero: "CH-000006", solicitante_nome: "Ana Lima", local: "Sala 2", prazo_limite: "2026-10-06T20:00:00Z", observacao_finalizacao: "Troquei a lâmpada" },
+    "https://app",
+  );
+  assert.equal(
+    textoConcluido(d),
+    "Olá, Ana! Seu chamado CH-000006 (Sala 2) foi concluído. O que foi feito: Troquei a lâmpada. Se o problema continuar, é só abrir um novo chamado em https://app",
+  );
 });
