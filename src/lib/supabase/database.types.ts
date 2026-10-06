@@ -244,6 +244,45 @@ export type Database = {
         }
         Relationships: []
       }
+      mensagens_solicitante: {
+        Row: {
+          canal: "feishu" | "whatsapp"
+          chamado_id: string
+          enviado_em: string
+          enviado_por: string | null
+          erro: string | null
+          id: number
+          status: "enviada" | "aberta_no_whatsapp" | "falhou"
+          texto: string
+        }
+        Insert: {
+          canal: "feishu" | "whatsapp"
+          chamado_id: string
+          enviado_em?: string
+          enviado_por?: string | null
+          erro?: string | null
+          id?: never
+          status: "enviada" | "aberta_no_whatsapp" | "falhou"
+          texto: string
+        }
+        Update: Partial<{ canal: "feishu" | "whatsapp"; texto: string; status: "enviada" | "aberta_no_whatsapp" | "falhou"; erro: string | null }>
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_solicitante_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_solicitante_enviado_por_fkey"
+            columns: ["enviado_por"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           ativo: boolean

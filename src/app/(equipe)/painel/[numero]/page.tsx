@@ -16,6 +16,7 @@ import {
   Mail,
   MapPin,
   MessageCircle,
+  MessageSquareText,
   Phone,
   Repeat,
   Sun,
@@ -30,11 +31,16 @@ import { exigirEquipe } from "@/lib/auth/sessao";
 import { BUCKET_FOTOS } from "@/lib/chamados/constantes";
 import { SELECT_CHAMADO } from "@/lib/chamados/consultas";
 import { COR_STATUS, formatarDuracao, ROTULO_ORIGEM, ROTULO_SITUACAO, ROTULO_STATUS } from "@/lib/chamados/rotulos";
+import { dadosModelo } from "@/lib/chamados/modelos-mensagem";
 import type { ChamadoCompleto } from "@/lib/chamados/tipos";
+import { emailDe, linkWhatsapp, telefoneDe } from "@/lib/contato";
 import { formatarDataHora } from "@/lib/datas";
+import { configPlataforma, ehPlataforma, PLATAFORMAS } from "@/lib/solicitante/plataformas";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { urlBase } from "@/lib/url";
 import { AcoesDetalhe } from "./acoes-detalhe";
 import { ContadorPrazo } from "./contador-prazo";
+import { EnviarMensagem } from "./enviar-mensagem";
 
 export async function generateMetadata({ params }: PageProps<"/painel/[numero]">): Promise<Metadata> {
   const { numero } = await params;
@@ -51,10 +57,9 @@ const ACOES: Record<string, { rotulo: string; icone: LucideIcon; cor: string }> 
 
 /** Links para contatar o solicitante: telefone (ligar/WhatsApp) ou e-mail. */
 function LinksContato({ contato }: { contato: string }) {
-  const email = contato.match(/[^\s@]+@[^\s@]+\.[^\s@]+/)?.[0];
-  const digitos = contato.replace(/\D/g, "");
-  const telefone = !email && digitos.length >= 8 ? digitos : null;
-  const whatsapp = telefone ? (telefone.length <= 11 ? `55${telefone}` : telefone) : null;
+  const email = emailDe(contato);
+  const telefone = telefoneDe(contato);
+  const whatsapp = linkWhatsapp(contato);
   const classe =
     "inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-semibold text-stone-700 hover:border-marca-300 hover:text-marca-800";
   return (
@@ -66,7 +71,7 @@ function LinksContato({ contato }: { contato: string }) {
         </a>
       ) : null}
       {whatsapp ? (
-        <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className={classe}>
+        <a href={whatsapp} target="_blank" rel="noreferrer" className={classe}>
           <MessageCircle className="h-3.5 w-3.5" aria-hidden />
           WhatsApp
         </a>
@@ -103,7 +108,7 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
   if (!data) notFound();
   const c = data as unknown as ChamadoCompleto;
 
-  const [{ data: historico }, { data: tecnicos }, foto] = await Promise.all([
+  const [{ data: historico }, { data: tecnicos }, foto, { data: mensagens }, base] = await Promise.all([
     supabase
       .from("chamado_historico")
       .select(
@@ -117,7 +122,17 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
     c.foto_path
       ? supabase.storage.from(BUCKET_FOTOS).createSignedUrl(c.foto_path, 60 * 60)
       : Promise.resolve({ data: null }),
+    supabase
+      .from("mensagens_solicitante")
+      .select("id, canal, texto, status, erro, enviado_em, autor:perfis!mensagens_solicitante_enviado_por_fkey(nome)")
+      .eq("chamado_id", c.id)
+      .order("enviado_em"),
+    urlBase(),
   ]);
+  const plataformaSolicitante =
+    ehPlataforma(c.solicitante_plataforma) && c.solicitante_externo_id && configPlataforma(c.solicitante_plataforma)
+      ? PLATAFORMAS[c.solicitante_plataforma].nome
+      : null;
 
   const ativo = c.status === "aberto" || c.status === "em_andamento";
   const agora = new Date(); // Server Component: renderiza uma vez por requisição
@@ -190,6 +205,44 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
             <AcoesDetalhe chamadoId={c.id} status={c.status} ehAdmin={perfil.papel === "admin"} tecnicos={tecnicos ?? []} />
           ) : null}
 
+          <EnviarMensagem
+            chamadoId={c.id}
+            contato={c.solicitante_contato}
+            dados={dadosModelo(c, base)}
+            feishu={plataformaSolicitante}
+          />
+
+          {mensagens?.length ? (
+            <Cartao>
+              <h2 className="mb-3 flex items-center gap-2 font-semibold text-stone-900">
+                <MessageSquareText className="h-4 w-4 text-stone-500" aria-hidden />
+                Mensagens enviadas ao solicitante
+              </h2>
+              <ul className="flex flex-col gap-3">
+                {mensagens.map((m) => (
+                  <li key={m.id} className="rounded-xl border border-stone-200 p-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                      <Selo className={m.canal === "feishu" ? "bg-sky-100 text-sky-800" : "bg-emerald-100 text-emerald-800"}>
+                        {m.canal === "feishu" ? "Feishu" : "WhatsApp"}
+                      </Selo>
+                      <span>
+                        {formatarDataHora(m.enviado_em)}
+                        {m.autor ? ` · por ${m.autor.nome}` : ""}
+                      </span>
+                      <span
+                        className={`ml-auto font-semibold ${m.status === "falhou" ? "text-red-700" : m.status === "enviada" ? "text-emerald-700" : "text-stone-600"}`}
+                      >
+                        {m.status === "enviada" ? "Enviada" : m.status === "falhou" ? "Falhou" : "Aberta no WhatsApp"}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm text-stone-800">{m.texto}</p>
+                    {m.erro ? <p className="mt-1 text-xs text-red-700">{m.erro}</p> : null}
+                  </li>
+                ))}
+              </ul>
+            </Cartao>
+          ) : null}
+
           <Cartao>
             <h2 className="mb-4 flex items-center gap-2 font-semibold text-stone-900">
               <History className="h-4 w-4 text-stone-500" aria-hidden />
@@ -237,6 +290,11 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
                   <Selo className="bg-emerald-100 text-emerald-800" icone={BadgeCheck}>
                     Verificado pelo {c.solicitante_plataforma === "lark" ? "Lark" : "Feishu"}
                   </Selo>
+                </span>
+              ) : null}
+              {c.solicitante_externo_id ? (
+                <span className="mt-0.5 block break-all font-mono text-[11px] text-stone-500" title="ID da pessoa no Feishu (open_id)">
+                  ID Feishu: {c.solicitante_externo_id}
                 </span>
               ) : null}
               <span className="block text-stone-600">{c.solicitante_contato}</span>

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Plug, QrCode, Settings, Users } from "lucide-react";
+import { Bell, ListChecks, Plug, QrCode, Settings, Users } from "lucide-react";
 
 const ABAS = [
+  { href: "/admin/chamados", rotulo: "Chamados", icone: ListChecks },
   { href: "/admin/usuarios", rotulo: "Usuários", icone: Users },
   { href: "/admin/configuracoes", rotulo: "SLA, categorias e turnos", icone: Settings },
   { href: "/admin/notificacoes", rotulo: "Notificações", icone: Bell },
