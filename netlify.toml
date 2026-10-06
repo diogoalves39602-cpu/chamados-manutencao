@@ -1,6 +1,9 @@
 # Produção no Netlify (plano gratuito). O Netlify detecta Next.js e aplica o
 # adaptador OpenNext automaticamente; nada específico de Vercel é usado no código.
 [build]
+  # O build roda nos servidores do Netlify (Linux), ligado ao repositório do GitHub.
+  # "netlify deploy --build" a partir do Windows falha ao empacotar o proxy (bug de
+  # caminho do empacotador de edge functions no Windows).
   command = "npm run build"
   publish = ".next"
 
