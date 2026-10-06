@@ -49,3 +49,6 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# gerado pelo empacotador de edge functions do Netlify
+deno.lock
