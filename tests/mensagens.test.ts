@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emailDe, linkWhatsapp, numeroWhatsapp, telefoneDe } from "../src/lib/contato";
 import { enviarMensagemUsuario, ErroFeishu, explicarErroFeishu } from "../src/lib/notificacoes/feishu-usuario";
-import { dadosModelo, MODELOS_MENSAGEM } from "../src/lib/chamados/modelos-mensagem";
+import { dadosModelo, MODELOS_MENSAGEM, textoReprovado } from "../src/lib/chamados/modelos-mensagem";
 import type { ConfigPlataforma } from "../src/lib/solicitante/plataformas";
 
 test("contato: telefone, e-mail e link do WhatsApp", () => {
@@ -56,4 +56,16 @@ test("Feishu: erros oficiais viram mensagens claras", async () => {
   assert.match(explicarErroFeishu(new ErroFeishu("x", 230013)), /disponível para ela/);
   assert.match(explicarErroFeishu(new ErroFeishu("x", 230027)), /im:message:send_as_bot/);
   assert.match(explicarErroFeishu(new ErroFeishu("x", 230006)), /Bot/);
+});
+
+test("mensagem de reprovação leva o motivo (com ponto final) e o link para abrir outro", () => {
+  const d = dadosModelo(
+    { numero: "CH-000005", solicitante_nome: "Rinaldo Silva", local: "Esteira", prazo_limite: "2026-10-06T20:21:00Z", motivo_cancelamento: " Não é serviço da manutenção " },
+    "https://app",
+  );
+  assert.equal(
+    textoReprovado(d),
+    "Olá, Rinaldo! Seu chamado CH-000005 (Esteira) foi reprovado pela equipe de manutenção. Motivo: Não é serviço da manutenção. Se precisar, abra um novo chamado em https://app",
+  );
+  assert.equal(dadosModelo({ ...d, solicitante_nome: "A", prazo_limite: "2026-10-06T20:21:00Z", motivo_cancelamento: null }, "x").motivo, undefined);
 });

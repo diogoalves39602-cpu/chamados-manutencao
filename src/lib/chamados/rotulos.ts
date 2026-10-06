@@ -8,7 +8,7 @@ export const ROTULO_STATUS: Record<Status, string> = {
   aberto: "Aberto",
   em_andamento: "Em andamento",
   finalizado: "Finalizado",
-  cancelado: "Cancelado",
+  cancelado: "Reprovado",
 };
 
 export const COR_STATUS: Record<Status, string> = {

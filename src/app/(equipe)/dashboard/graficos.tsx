@@ -83,7 +83,7 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
                       <span className="tabular-nums text-stone-900">{num(s.valor)}</span>
                     </p>
                   ))}
-                  {d.cancelados ? <p className="text-stone-500">Cancelados: {num(d.cancelados)}</p> : null}
+                  {d.cancelados ? <p className="text-stone-500">Reprovados: {num(d.cancelados)}</p> : null}
                 </div>
               </div>
             );

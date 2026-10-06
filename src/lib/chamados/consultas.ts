@@ -14,7 +14,7 @@ export const FILTROS_STATUS = {
   aberto: "Abertos",
   em_andamento: "Em andamento",
   finalizado: "Finalizados",
-  cancelado: "Cancelados",
+  cancelado: "Reprovados",
   todos: "Todos",
 } as const;
 

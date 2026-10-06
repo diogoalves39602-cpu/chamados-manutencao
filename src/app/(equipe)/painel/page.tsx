@@ -83,6 +83,7 @@ export default async function Painel({ searchParams }: PageProps<"/painel">) {
         agoraServidor={agora.getTime()}
         limitado={limitado}
         meuId={perfil.id}
+        ehAdmin={perfil.papel === "admin"}
         apenasFila={filtros.status === "ativos"}
       />
     </div>

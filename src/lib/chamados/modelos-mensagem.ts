@@ -1,7 +1,8 @@
 import { formatarDataHora } from "@/lib/datas";
 
 // Modelos de mensagem para o solicitante (editáveis antes de enviar).
-export type DadosModelo = { numero: string; nome: string; local: string; prazo: string; link: string };
+const comPonto = (t: string) => (/[.!?]$/.test(t) ? t : `${t}.`);
+export type DadosModelo = { numero: string; nome: string; local: string; prazo: string; link: string; motivo?: string };
 
 export const MODELOS_MENSAGEM: { id: string; rotulo: string; texto: (d: DadosModelo) => string }[] = [
   {
@@ -26,14 +27,27 @@ export const MODELOS_MENSAGEM: { id: string; rotulo: string; texto: (d: DadosMod
     texto: (d) =>
       `Olá, ${d.nome}! Seu chamado ${d.numero} (${d.local}) foi concluído. Se o problema continuar, é só abrir um novo chamado em ${d.link}`,
   },
+  {
+    id: "reprovado",
+    rotulo: "Reprovado",
+    texto: (d) =>
+      `Olá, ${d.nome}! Seu chamado ${d.numero} (${d.local}) foi reprovado pela equipe de manutenção.${d.motivo ? ` Motivo: ${comPonto(d.motivo)}` : ""} Se precisar, abra um novo chamado em ${d.link}`,
+  },
 ];
 
-export function dadosModelo(c: { numero: string; solicitante_nome: string; local: string; prazo_limite: string }, link: string): DadosModelo {
+/** Texto avisando o solicitante de que o chamado foi reprovado. */
+export const textoReprovado = (d: DadosModelo) => MODELOS_MENSAGEM.find((m) => m.id === "reprovado")!.texto(d);
+
+export function dadosModelo(
+  c: { numero: string; solicitante_nome: string; local: string; prazo_limite: string; motivo_cancelamento?: string | null },
+  link: string,
+): DadosModelo {
   return {
     numero: c.numero,
     nome: c.solicitante_nome.split(" ")[0],
     local: c.local,
     prazo: formatarDataHora(c.prazo_limite),
     link,
+    motivo: c.motivo_cancelamento?.trim() || undefined,
   };
 }

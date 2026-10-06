@@ -26,7 +26,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { IconeCategoria } from "@/components/icone-categoria";
-import { Cartao, Selo } from "@/components/ui";
+import { Alerta, Cartao, Selo } from "@/components/ui";
 import { exigirEquipe } from "@/lib/auth/sessao";
 import { BUCKET_FOTOS } from "@/lib/chamados/constantes";
 import { SELECT_CHAMADO } from "@/lib/chamados/consultas";
@@ -52,7 +52,7 @@ const ACOES: Record<string, { rotulo: string; icone: LucideIcon; cor: string }> 
   assumido: { rotulo: "Assumido", icone: Hand, cor: "bg-indigo-600" },
   reatribuido: { rotulo: "Reatribuído", icone: Repeat, cor: "bg-violet-600" },
   finalizado: { rotulo: "Finalizado", icone: CircleCheck, cor: "bg-emerald-600" },
-  cancelado: { rotulo: "Cancelado", icone: Ban, cor: "bg-stone-500" },
+  cancelado: { rotulo: "Reprovado", icone: Ban, cor: "bg-stone-500" },
 };
 
 /** Links para contatar o solicitante: telefone (ligar/WhatsApp) ou e-mail. */
@@ -98,7 +98,19 @@ function Info({ icone: Icone, rotulo, children }: { icone: LucideIcon; rotulo: s
   );
 }
 
-export default async function DetalheChamado({ params }: PageProps<"/painel/[numero]">) {
+const AVISO_REPROVADO: Record<string, { tipo: "sucesso" | "aviso"; texto: string }> = {
+  feishu: { tipo: "sucesso", texto: "Chamado reprovado. Quem abriu já recebeu o aviso com o motivo no Feishu." },
+  falhou: {
+    tipo: "aviso",
+    texto: "Chamado reprovado, mas o aviso pelo Feishu não chegou (veja o erro em \"Mensagens enviadas\"). Avise pelo WhatsApp abaixo — a mensagem já está pronta.",
+  },
+  manual: {
+    tipo: "aviso",
+    texto: "Chamado reprovado. Quem abriu não entrou com o Feishu: toque em \"Abrir no WhatsApp\" abaixo para enviar o aviso já escrito.",
+  },
+};
+
+export default async function DetalheChamado({ params, searchParams }: PageProps<"/painel/[numero]">) {
   const perfil = await exigirEquipe();
   const numero = decodeURIComponent((await params).numero).toUpperCase();
   if (!/^CH-\d{6,}$/.test(numero)) notFound();
@@ -135,6 +147,8 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
       : null;
 
   const ativo = c.status === "aberto" || c.status === "em_andamento";
+  const { reprovado } = await searchParams;
+  const avisoReprovado = c.status === "cancelado" && typeof reprovado === "string" ? AVISO_REPROVADO[reprovado] : undefined;
   const agora = new Date(); // Server Component: renderiza uma vez por requisição
 
   return (
@@ -146,6 +160,8 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Voltar ao painel
       </Link>
+
+      {avisoReprovado ? <Alerta tipo={avisoReprovado.tipo}>{avisoReprovado.texto}</Alerta> : null}
 
       <Cartao className="flex flex-wrap items-center gap-4">
         <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-marca-50 text-marca-700">
@@ -194,7 +210,7 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
               <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-3">
                 <h3 className="flex items-center gap-1.5 text-xs font-semibold text-stone-600">
                   <Ban className="h-3.5 w-3.5" aria-hidden />
-                  Motivo do cancelamento
+                  Motivo da reprovação
                 </h3>
                 <p className="mt-1 whitespace-pre-wrap text-sm">{c.motivo_cancelamento}</p>
               </div>
@@ -210,6 +226,7 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
             contato={c.solicitante_contato}
             dados={dadosModelo(c, base)}
             feishu={plataformaSolicitante}
+            modeloInicial={c.status === "cancelado" ? "reprovado" : undefined}
           />
 
           {mensagens?.length ? (
@@ -329,7 +346,7 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
               </Info>
             ) : null}
             {c.status === "cancelado" ? (
-              <Info icone={Ban} rotulo="Cancelado">
+              <Info icone={Ban} rotulo="Reprovado">
                 {formatarDataHora(c.cancelado_em)} por {c.cancelador?.nome ?? "—"}
               </Info>
             ) : null}

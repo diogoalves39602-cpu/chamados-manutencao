@@ -37,7 +37,7 @@ export function estadoPrazo(c: ChamadoPrazo, agoraMs: number): { cor: CorPrazo; 
       ? { cor: "neutro", texto: "Finalizado fora do prazo", restanteMs }
       : { cor: "neutro", texto: "Finalizado no prazo", restanteMs };
   }
-  if (c.status === "cancelado") return { cor: "neutro", texto: "Cancelado", restanteMs };
+  if (c.status === "cancelado") return { cor: "neutro", texto: "Reprovado", restanteMs };
 
   if (restanteMs < 0) return { cor: "vermelho", texto: `Atrasado ${cronometro(restanteMs)}`, restanteMs };
   if (restanteMs < 60 * 60 * 1000) return { cor: "amarelo", texto: `Faltam ${cronometro(restanteMs)}`, restanteMs };

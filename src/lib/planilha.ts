@@ -67,7 +67,7 @@ function abaChamados(chamados: ChamadoCompleto[]) {
     "Número", "Status", "Situação do prazo", "Origem", "Turno", "Categoria", "Local",
     "Solicitante", "Setor", "Contato", "Identificado via", "Descrição", "Aberto em", "Prazo limite", "SLA (min)",
     "Recebido por", "Recebido em", "Tempo até assumir (min)", "Finalizado por", "Finalizado em",
-    "Tempo total (min)", "Observação da finalização", "Cancelado por", "Cancelado em", "Motivo do cancelamento",
+    "Tempo total (min)", "Observação da finalização", "Reprovado por", "Reprovado em", "Motivo da reprovação",
   ];
   const linhas: Celula[][] = chamados.map((c) => [
     c.numero,
@@ -105,7 +105,7 @@ function abaChamados(chamados: ChamadoCompleto[]) {
 }
 
 const CAB_TABELA = [
-  "Total", "Abertos", "Em andamento", "Finalizados", "Cancelados",
+  "Total", "Abertos", "Em andamento", "Finalizados", "Reprovados",
   "Dentro do prazo", "Fora do prazo", "% dentro do prazo", "% fora do prazo",
   "Atrasados em aberto", "Tempo médio (min)", "Tempo médio até assumir (min)",
 ];
@@ -129,7 +129,7 @@ function abaResumo(d: DadosPlanilha) {
     ["Abertos (aguardando)", t.abertos, celulaPct(t.abertos, t.total)],
     ["Em andamento", t.em_andamento, celulaPct(t.em_andamento, t.total)],
     ["Finalizados", t.finalizados, celulaPct(t.finalizados, t.total)],
-    ["Cancelados (fora do SLA)", t.cancelados, celulaPct(t.cancelados, t.total)],
+    ["Reprovados (fora do SLA)", t.cancelados, celulaPct(t.cancelados, t.total)],
     ["Finalizados dentro do prazo", t.dentro, celulaPct(t.dentro, t.finalizados)],
     ["Finalizados fora do prazo", t.fora, celulaPct(t.fora, t.finalizados)],
     ["SLA projetado (atrasados em aberto contam como fora)", null, celulaPct(t.dentro, t.finalizados + t.atrasados)],

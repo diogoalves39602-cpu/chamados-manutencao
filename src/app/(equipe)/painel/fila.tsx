@@ -72,12 +72,14 @@ export function Fila({
   agoraServidor,
   limitado,
   meuId,
+  ehAdmin,
   apenasFila,
 }: {
   chamados: ChamadoCompleto[];
   agoraServidor: number;
   limitado: boolean;
   meuId: string;
+  ehAdmin: boolean;
   apenasFila: boolean;
 }) {
   const agora = useAgora(agoraServidor);
@@ -236,7 +238,7 @@ export function Fila({
       ) : (
         <ul className="grid gap-3 lg:grid-cols-2">
           {visiveis.map((c) => (
-            <CartaoChamado key={c.id} chamado={c} agora={agora} novo={novos.has(c.id)} meu={c.recebido_por === meuId} />
+            <CartaoChamado key={c.id} chamado={c} agora={agora} novo={novos.has(c.id)} meu={c.recebido_por === meuId} ehAdmin={ehAdmin} />
           ))}
         </ul>
       )}

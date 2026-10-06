@@ -7,7 +7,7 @@ import { AreaTexto, Alerta, Botao, Campo, Cartao, Selecao } from "@/components/u
 import type { Status } from "@/lib/chamados/rotulos";
 import {
   assumirChamado,
-  cancelarChamado,
+  reprovarChamado,
   finalizarChamado,
   reatribuirChamado,
   type EstadoAcao,
@@ -27,8 +27,8 @@ export function AcoesDetalhe({
   const [eAssumir, assumir, assumindo] = useActionState(assumirChamado, {} as EstadoAcao);
   const [eFinalizar, finalizar, finalizando] = useActionState(finalizarChamado, {} as EstadoAcao);
   const [eReatribuir, reatribuir, reatribuindo] = useActionState(reatribuirChamado, {} as EstadoAcao);
-  const [eCancelar, cancelar, cancelando] = useActionState(cancelarChamado, {} as EstadoAcao);
-  const erro = eAssumir.erro ?? eFinalizar.erro ?? eReatribuir.erro ?? eCancelar.erro;
+  const [eReprovar, reprovar, reprovando] = useActionState(reprovarChamado, {} as EstadoAcao);
+  const erro = eAssumir.erro ?? eFinalizar.erro ?? eReatribuir.erro ?? eReprovar.erro;
   const ok = eAssumir.ok ?? eReatribuir.ok;
 
   return (
@@ -85,17 +85,17 @@ export function AcoesDetalhe({
           <form
             className="flex flex-col gap-2"
             onSubmit={(e) => {
-              if (!confirm("Cancelar este chamado? Cancelados não entram no cálculo de SLA e não podem ser reabertos.")) {
+              if (!confirm("Reprovar este chamado? Quem abriu será avisado com o motivo. Reprovados não entram no cálculo de SLA e não podem ser reabertos.")) {
                 e.preventDefault();
                 return;
               }
-              enviarSemReset(cancelar)(e);
+              enviarSemReset(reprovar)(e);
             }}
           >
             <input type="hidden" name="id" value={chamadoId} />
-            <AreaTexto id="motivo" name="motivo" rotulo="Cancelar (motivo obrigatório)" rows={3} required minLength={5} maxLength={1000} />
-            <Botao type="submit" variante="perigo" icone={Ban} disabled={cancelando}>
-              Cancelar chamado
+            <AreaTexto id="motivo" name="motivo" rotulo="Reprovar (motivo obrigatório — vai para quem abriu)" rows={3} required minLength={5} maxLength={1000} />
+            <Botao type="submit" variante="perigo" icone={Ban} disabled={reprovando}>
+              {reprovando ? "Reprovando…" : "Reprovar chamado"}
             </Botao>
           </form>
         </div>

@@ -14,15 +14,18 @@ export function EnviarMensagem({
   contato,
   dados,
   feishu,
+  modeloInicial,
 }: {
   chamadoId: string;
   contato: string;
   dados: DadosModelo;
   /** Nome da plataforma ("Feishu"/"Lark") se o solicitante entrou com ela; senão null. */
   feishu: string | null;
+  /** Modelo já escolhido ao abrir (ex.: "reprovado"). */
+  modeloInicial?: string;
 }) {
   const [estado, acao, pendente] = useActionState(enviarPeloFeishu, {} as EstadoMensagem);
-  const [texto, setTexto] = useState(() => MODELOS_MENSAGEM[0].texto(dados));
+  const [texto, setTexto] = useState(() => (MODELOS_MENSAGEM.find((m) => m.id === modeloInicial) ?? MODELOS_MENSAGEM[0]).texto(dados));
   const temWhatsapp = linkWhatsapp(contato) !== null;
 
   return (
@@ -33,7 +36,7 @@ export function EnviarMensagem({
       </h2>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Modelos de mensagem">
-        {MODELOS_MENSAGEM.map((m) => (
+        {MODELOS_MENSAGEM.filter((m) => m.id !== "reprovado" || dados.motivo).map((m) => (
           <button
             key={m.id}
             type="button"

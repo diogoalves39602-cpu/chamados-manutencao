@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Todos os chamados" };
 
 const POR_PAGINA = 50;
 const PERIODOS = ["todos", "hoje", "7d", "30d", "mes"] as const satisfies readonly ChavePeriodo[];
-const STATUS = { todos: "Todos", aberto: "Abertos", em_andamento: "Em andamento", finalizado: "Finalizados", cancelado: "Cancelados" } as const;
+const STATUS = { todos: "Todos", aberto: "Abertos", em_andamento: "Em andamento", finalizado: "Finalizados", cancelado: "Reprovados" } as const;
 const IDENTIFICACAO = { todos: "Todos", feishu: "Verificados pelo Feishu/Lark", nao: "Sem identificação" } as const;
 
 type Params = Record<string, string | string[] | undefined>;

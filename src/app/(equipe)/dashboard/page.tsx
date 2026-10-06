@@ -175,7 +175,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
           icone={ListChecks}
           rotulo="Abertos no período"
           valor={t.total.toLocaleString("pt-BR")}
-          detalhe={t.cancelados ? `${t.cancelados} cancelado${t.cancelados === 1 ? "" : "s"} (fora do SLA)` : "Nenhum cancelado"}
+          detalhe={t.cancelados ? `${t.cancelados} reprovado${t.cancelados === 1 ? "" : "s"} (fora do SLA)` : "Nenhum reprovado"}
         />
         <Bloco icone={Timer} rotulo="Tempo médio de atendimento" valor={formatarDuracao(t.tempo_medio_total)} detalhe="Abertura até finalização" />
         <Bloco icone={Hand} rotulo="Tempo médio até assumir" valor={formatarDuracao(t.tempo_medio_assumir)} detalhe="Abertura até alguém assumir" />
@@ -194,9 +194,9 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
         <a href="#cancelados" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-marca-600 [&>div]:h-full [&>div]:transition-colors [&>div:hover]:border-stone-300">
           <Bloco
             icone={Ban}
-            rotulo="Cancelados"
+            rotulo="Reprovados"
             valor={t.cancelados.toLocaleString("pt-BR")}
-            detalhe={t.cancelados ? `${formatarPct(pct(t.cancelados, t.total))} do total · ver motivos` : "Nenhum cancelado"}
+            detalhe={t.cancelados ? `${formatarPct(pct(t.cancelados, t.total))} do total · ver motivos` : "Nenhum reprovado"}
           />
         </a>
       </div>
@@ -224,11 +224,11 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
       <Cartao id="cancelados" className="scroll-mt-20">
         <TituloCartao
           icone={Ban}
-          titulo="Chamados cancelados no período"
-          subtitulo="Com o motivo informado por quem cancelou · não entram no cálculo de SLA"
+          titulo="Chamados reprovados no período"
+          subtitulo="Com o motivo informado por quem reprovou · não entram no cálculo de SLA"
         />
         {cancelados.length === 0 ? (
-          <p className="text-sm text-stone-500">Nenhum chamado cancelado com estes filtros.</p>
+          <p className="text-sm text-stone-500">Nenhum chamado reprovado com estes filtros.</p>
         ) : (
           <ul className="-mx-2 divide-y divide-stone-100">
             {cancelados.map((c) => (
@@ -250,7 +250,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                     </p>
                   </div>
                   <div className="text-xs text-stone-500 sm:text-right">
-                    <p>Cancelado {formatarDataHora(c.cancelado_em)}</p>
+                    <p>Reprovado {formatarDataHora(c.cancelado_em)}</p>
                     <p>por {c.cancelador?.nome ?? "—"}</p>
                   </div>
                 </Link>
@@ -260,7 +260,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
         )}
       </Cartao>
 
-      <p className="text-xs text-stone-400">Atualizado em {formatarDataHora(new Date())}. Cancelados não entram no cálculo de SLA.</p>
+      <p className="text-xs text-stone-400">Atualizado em {formatarDataHora(new Date())}. Reprovados não entram no cálculo de SLA.</p>
     </div>
   );
 }

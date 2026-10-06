@@ -25,7 +25,7 @@ function andamento(c: ChamadoSolicitante) {
     case "finalizado":
       return `Concluído em ${formatarDataHora(c.finalizado_em)}${c.situacao_prazo ? ` · ${ROTULO_SITUACAO[c.situacao_prazo].toLowerCase()}` : ""}`;
     case "cancelado":
-      return "Cancelado pela equipe de manutenção";
+      return "Reprovado pela equipe de manutenção";
   }
 }
 
@@ -35,7 +35,7 @@ function etapas(c: ChamadoSolicitante): Etapa[] {
   const lista: Etapa[] = [{ titulo: "Chamado aberto", quando: c.aberto_em, feito: true }];
   if (c.status === "cancelado") {
     if (c.recebido_em) lista.push({ titulo: `Atendido por ${c.tecnico ?? "técnico"}`, quando: c.recebido_em, feito: true });
-    lista.push({ titulo: "Cancelado", quando: c.cancelado_em, feito: true });
+    lista.push({ titulo: "Reprovado", quando: c.cancelado_em, feito: true });
     return lista;
   }
   lista.push({
@@ -70,7 +70,7 @@ function Detalhes({ c }: { c: ChamadoSolicitante }) {
         <div className="rounded-xl bg-stone-100 p-3">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-700">
             <Ban className="h-3.5 w-3.5" aria-hidden />
-            Por que foi cancelado
+            Por que foi reprovado
           </p>
           <p className="mt-1 whitespace-pre-wrap text-sm text-stone-900">{c.motivo_cancelamento}</p>
         </div>

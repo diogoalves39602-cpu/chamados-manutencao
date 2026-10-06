@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ChevronRight, CircleCheck, Clock, Hand, MapPin, User, UserCheck } from "lucide-react";
+import { Ban, BadgeCheck, ChevronRight, CircleCheck, Clock, Hand, MapPin, User, UserCheck } from "lucide-react";
 import { enviarSemReset } from "@/components/envio";
 import { IconeCategoria } from "@/components/icone-categoria";
 import { SeloPrazo } from "@/components/selo-prazo";
@@ -11,18 +11,20 @@ import { CLASSES_PRAZO, estadoPrazo } from "@/lib/chamados/prazo";
 import type { ChamadoCompleto } from "@/lib/chamados/tipos";
 import { COR_STATUS, formatarDuracao, ROTULO_STATUS } from "@/lib/chamados/rotulos";
 import { formatarHora } from "@/lib/datas";
-import { assumirChamado, finalizarChamado, type EstadoAcao } from "./actions";
+import { assumirChamado, finalizarChamado, reprovarChamado, type EstadoAcao } from "./actions";
 
 export function CartaoChamado({
   chamado: c,
   agora,
   novo,
   meu,
+  ehAdmin,
 }: {
   chamado: ChamadoCompleto;
   agora: number;
   novo: boolean;
   meu: boolean;
+  ehAdmin: boolean;
 }) {
   const classes = CLASSES_PRAZO[estadoPrazo(c, agora).cor];
   const ativo = c.status === "aberto" || c.status === "em_andamento";
@@ -73,16 +75,17 @@ export function CartaoChamado({
         <span className={`ml-auto rounded-full px-2 py-0.5 font-semibold ${COR_STATUS[c.status]}`}>{ROTULO_STATUS[c.status]}</span>
       </div>
 
-      {ativo ? <AcoesRapidas chamado={c} /> : null}
+      {ativo ? <AcoesRapidas chamado={c} ehAdmin={ehAdmin} /> : null}
     </li>
   );
 }
 
-function AcoesRapidas({ chamado: c }: { chamado: ChamadoCompleto }) {
+function AcoesRapidas({ chamado: c, ehAdmin }: { chamado: ChamadoCompleto; ehAdmin: boolean }) {
   const [estadoAssumir, assumir, assumindo] = useActionState(assumirChamado, {} as EstadoAcao);
   const [estadoFinalizar, finalizar, finalizando] = useActionState(finalizarChamado, {} as EstadoAcao);
-  const [abrirFinalizar, setAbrirFinalizar] = useState(false);
-  const erro = estadoAssumir.erro ?? estadoFinalizar.erro;
+  const [estadoReprovar, reprovar, reprovando] = useActionState(reprovarChamado, {} as EstadoAcao);
+  const [aberto, setAberto] = useState<"finalizar" | "reprovar" | null>(null);
+  const erro = estadoAssumir.erro ?? estadoFinalizar.erro ?? estadoReprovar.erro;
 
   return (
     <div className="flex flex-col gap-2 border-t border-stone-100 pt-3">
@@ -101,11 +104,23 @@ function AcoesRapidas({ chamado: c }: { chamado: ChamadoCompleto }) {
           variante={c.status === "aberto" ? "secundario" : "primario"}
           icone={CircleCheck}
           className="flex-1 sm:flex-none"
-          onClick={() => setAbrirFinalizar((v) => !v)}
-          aria-expanded={abrirFinalizar}
+          onClick={() => setAberto((v) => (v === "finalizar" ? null : "finalizar"))}
+          aria-expanded={aberto === "finalizar"}
         >
           Finalizar
         </Botao>
+        {ehAdmin ? (
+          <Botao
+            type="button"
+            variante="perigo"
+            icone={Ban}
+            className="flex-1 sm:flex-none"
+            onClick={() => setAberto((v) => (v === "reprovar" ? null : "reprovar"))}
+            aria-expanded={aberto === "reprovar"}
+          >
+            Reprovar
+          </Botao>
+        ) : null}
         <Link
           href={`/painel/${c.numero}`}
           className="ml-auto inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-stone-600 hover:bg-stone-100"
@@ -114,12 +129,35 @@ function AcoesRapidas({ chamado: c }: { chamado: ChamadoCompleto }) {
           <ChevronRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
-      {abrirFinalizar ? (
+      {aberto === "finalizar" ? (
         <form onSubmit={enviarSemReset(finalizar)} className="flex animate-entrar flex-col gap-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
           <input type="hidden" name="id" value={c.id} />
           <AreaTexto id={`obs-${c.id}`} name="observacao" rotulo="O que foi feito?" rows={3} required minLength={3} maxLength={2000} />
           <Botao type="submit" disabled={finalizando} icone={CircleCheck}>
             {finalizando ? "Finalizando…" : "Confirmar finalização"}
+          </Botao>
+        </form>
+      ) : null}
+      {aberto === "reprovar" ? (
+        <form onSubmit={enviarSemReset(reprovar)} className="flex animate-entrar flex-col gap-2 rounded-xl border border-red-200 bg-red-50/60 p-3">
+          <input type="hidden" name="id" value={c.id} />
+          <AreaTexto
+            id={`motivo-${c.id}`}
+            name="motivo"
+            rotulo="Por que este chamado foi reprovado?"
+            placeholder="Ex.: não é serviço da manutenção, procure o setor de TI"
+            rows={3}
+            required
+            minLength={5}
+            maxLength={1000}
+          />
+          <p className="text-xs text-stone-600">
+            {c.solicitante_externo_id
+              ? `${c.solicitante_nome.split(" ")[0]} recebe o aviso com o motivo direto no Feishu.`
+              : "Depois de reprovar, a tela do chamado abre com a mensagem pronta para enviar no WhatsApp."}
+          </p>
+          <Botao type="submit" variante="perigo" disabled={reprovando} icone={Ban}>
+            {reprovando ? "Reprovando…" : "Confirmar reprovação"}
           </Botao>
         </form>
       ) : null}
