@@ -79,3 +79,21 @@ test("contato do formulário: telefone com DDD ou e-mail válido", async () => {
     assert.ok(!contatoSchema.safeParse(ruim).success, ruim);
   }
 });
+
+test("todo cartão do grupo leva a palavra-chave \"chamado\" no título (bots com palavra-chave)", async () => {
+  const { cartaoAlertaPrazo, cartaoNovoChamado, cartaoTeste } = await import("../src/lib/notificacoes/cartoes");
+  const c = {
+    numero: "CH-000009", categoria: "Elétrica", responsavel: null, local: "Sala 1", descricao: "Sem luz",
+    solicitante_nome: "Ana", solicitante_setor: "RH", solicitante_contato: "11988887777",
+    aberto_em: "2026-10-06T18:00:00Z", prazo_limite: "2026-10-06T20:00:00Z", status: "aberto", turno: "Tarde", origem: "formulario",
+  } as unknown as Parameters<typeof cartaoNovoChamado>[0];
+  const prazo = new Date(c.prazo_limite).getTime();
+  for (const cartao of [
+    cartaoNovoChamado(c),
+    cartaoAlertaPrazo(c, undefined, prazo - 20 * 60000),
+    cartaoAlertaPrazo(c, undefined, prazo + 5 * 60000),
+    cartaoTeste("Grupo"),
+  ]) {
+    assert.match((cartao as { header: { title: { content: string } } }).header.title.content, /chamado/);
+  }
+});

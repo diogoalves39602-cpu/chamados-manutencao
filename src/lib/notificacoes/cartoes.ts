@@ -1,4 +1,3 @@
-import "server-only";
 import { formatarDataHora } from "@/lib/datas";
 import { formatarDuracao, ROTULO_ORIGEM, ROTULO_STATUS } from "@/lib/chamados/rotulos";
 import type { Tables } from "@/lib/supabase/database.types";
@@ -52,8 +51,8 @@ export function cartaoAlertaPrazo(c: ChamadoNotificavel, urlPainel?: string, ago
       title: {
         tag: "plain_text",
         content: estourado
-          ? `Prazo estourado: ${c.numero} (há ${formatarDuracao(-restante)})`
-          : `Faltam ${formatarDuracao(restante)} para o prazo de ${c.numero}`,
+          ? `Prazo estourado no chamado ${c.numero} (há ${formatarDuracao(-restante)})`
+          : `Faltam ${formatarDuracao(restante)} para o prazo do chamado ${c.numero}`,
       },
     },
     elements: [
