@@ -91,3 +91,33 @@ export async function obterIndicadores(f: FiltrosDashboard): Promise<Indicadores
     atrasadosAgora: Number(resultado.atrasados_agora),
   };
 }
+
+export type ChamadoCancelado = {
+  numero: string;
+  aberto_em: string;
+  cancelado_em: string | null;
+  local: string;
+  solicitante_nome: string;
+  motivo_cancelamento: string | null;
+  categoria: { nome: string } | null;
+  cancelador: { nome: string } | null;
+};
+
+/** Chamados cancelados no período, com os mesmos filtros dos indicadores. */
+export async function listarCancelados(f: FiltrosDashboard, limite = 50) {
+  const supabase = await criarClienteServidor();
+  let q = supabase
+    .from("chamados")
+    .select(
+      "numero, aberto_em, cancelado_em, local, solicitante_nome, motivo_cancelamento, categoria:categorias(nome), cancelador:perfis!chamados_cancelado_por_fkey(nome)",
+    )
+    .eq("status", "cancelado")
+    .gte("aberto_em", f.periodo.inicio.toISOString())
+    .lt("aberto_em", f.periodo.fim.toISOString());
+  if (f.categoria) q = q.eq("categoria_id", f.categoria);
+  if (f.tecnico) q = q.eq("recebido_por", f.tecnico);
+  if (f.turno) q = q.eq("turno", f.turno);
+  const { data, error } = await q.order("cancelado_em", { ascending: false }).limit(limite);
+  if (error) throw new Error(`cancelados: ${error.message}`);
+  return (data ?? []) as unknown as ChamadoCancelado[];
+}

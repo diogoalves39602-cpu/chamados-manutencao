@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import {
+  Ban,
   CircleCheck,
   FileSpreadsheet,
   Hand,
@@ -23,6 +25,7 @@ import {
   filtrosParaQuery,
   formatarPct,
   lerFiltrosDashboard,
+  listarCancelados,
   obterIndicadores,
   pct,
   pctDentro,
@@ -83,8 +86,9 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
   await exigirEquipe();
   const filtros = lerFiltrosDashboard(await searchParams);
   const supabase = await criarClienteServidor();
-  const [ind, categorias, tecnicos, { data: turnos }] = await Promise.all([
+  const [ind, cancelados, categorias, tecnicos, { data: turnos }] = await Promise.all([
     obterIndicadores(filtros),
+    listarCancelados(filtros),
     listarCategorias(),
     listarTecnicos(),
     supabase.from("turnos").select("nome").order("ordem"),
@@ -171,10 +175,13 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
           icone={ListChecks}
           rotulo="Abertos no período"
           valor={t.total.toLocaleString("pt-BR")}
-          detalhe={t.cancelados ? `${t.cancelados} cancelados (fora do SLA)` : "Nenhum cancelado"}
+          detalhe={t.cancelados ? `${t.cancelados} cancelado${t.cancelados === 1 ? "" : "s"} (fora do SLA)` : "Nenhum cancelado"}
         />
         <Bloco icone={Timer} rotulo="Tempo médio de atendimento" valor={formatarDuracao(t.tempo_medio_total)} detalhe="Abertura até finalização" />
         <Bloco icone={Hand} rotulo="Tempo médio até assumir" valor={formatarDuracao(t.tempo_medio_assumir)} detalhe="Abertura até alguém assumir" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Bloco icone={Inbox} rotulo="Aguardando" valor={t.abertos.toLocaleString("pt-BR")} detalhe={`${formatarPct(pct(t.abertos, t.total))} do total`} />
         <Bloco icone={Wrench} rotulo="Em andamento" valor={t.em_andamento.toLocaleString("pt-BR")} detalhe={`${formatarPct(pct(t.em_andamento, t.total))} do total`} />
         <Bloco icone={CircleCheck} rotulo="Finalizados" valor={t.finalizados.toLocaleString("pt-BR")} detalhe={`${formatarPct(pct(t.finalizados, t.total))} do total`} />
@@ -184,6 +191,14 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
           valor={ativos.toLocaleString("pt-BR")}
           detalhe={t.atrasados ? `${t.atrasados} já estouraram o prazo` : "Nenhum atrasado"}
         />
+        <a href="#cancelados" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-marca-600 [&>div]:h-full [&>div]:transition-colors [&>div:hover]:border-stone-300">
+          <Bloco
+            icone={Ban}
+            rotulo="Cancelados"
+            valor={t.cancelados.toLocaleString("pt-BR")}
+            detalhe={t.cancelados ? `${formatarPct(pct(t.cancelados, t.total))} do total · ver motivos` : "Nenhum cancelado"}
+          />
+        </a>
       </div>
 
       <Cartao>
@@ -205,6 +220,45 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
           <Ranking grupos={ind.porTurno} />
         </Cartao>
       </div>
+
+      <Cartao id="cancelados" className="scroll-mt-20">
+        <TituloCartao
+          icone={Ban}
+          titulo="Chamados cancelados no período"
+          subtitulo="Com o motivo informado por quem cancelou · não entram no cálculo de SLA"
+        />
+        {cancelados.length === 0 ? (
+          <p className="text-sm text-stone-500">Nenhum chamado cancelado com estes filtros.</p>
+        ) : (
+          <ul className="-mx-2 divide-y divide-stone-100">
+            {cancelados.map((c) => (
+              <li key={c.numero}>
+                <Link
+                  href={`/painel/${c.numero}`}
+                  className="grid gap-1 rounded-xl px-2 py-3 hover:bg-stone-50 sm:grid-cols-[8rem_1fr_12rem] sm:items-start sm:gap-4"
+                >
+                  <div>
+                    <p className="font-mono text-sm font-bold text-marca-800">{c.numero}</p>
+                    <p className="text-xs text-stone-500">Aberto {formatarDataHora(c.aberto_em)}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-stone-900">
+                      <span className="font-semibold">Motivo:</span> {c.motivo_cancelamento ?? "—"}
+                    </p>
+                    <p className="truncate text-xs text-stone-500">
+                      {c.solicitante_nome} · {c.local} · {c.categoria?.nome ?? "—"}
+                    </p>
+                  </div>
+                  <div className="text-xs text-stone-500 sm:text-right">
+                    <p>Cancelado {formatarDataHora(c.cancelado_em)}</p>
+                    <p>por {c.cancelador?.nome ?? "—"}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Cartao>
 
       <p className="text-xs text-stone-400">Atualizado em {formatarDataHora(new Date())}. Cancelados não entram no cálculo de SLA.</p>
     </div>
