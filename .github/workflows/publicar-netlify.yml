@@ -1,0 +1,43 @@
+# Publica o sistema no Netlify a cada push na main (e manualmente em Actions).
+# O build roda aqui, em Linux: o "netlify deploy --build" a partir do Windows falha
+# ao empacotar o proxy. As variáveis do app (Supabase etc.) vêm do próprio site no
+# Netlify; aqui só ficam as credenciais de publicação.
+#
+# Secrets: NETLIFY_AUTH_TOKEN e NETLIFY_SITE_ID
+name: Publicar no Netlify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publicar-netlify
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testes
+        run: npm test
+
+      - name: Build e publicação em produção
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx --yes netlify-cli@27 deploy --build --prod --message "GitHub ${{ github.sha }}"
