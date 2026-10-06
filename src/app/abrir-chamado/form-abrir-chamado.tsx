@@ -26,11 +26,14 @@ export function FormAbrirChamado({
   categorias,
   identidade,
   ofertaLogin = [],
+  avisoLogin,
 }: {
   categorias: { id: number; nome: string }[];
   identidade?: { nome: string; plataforma: Plataforma; contato: string };
   /** Login opcional: plataformas para oferecer "Entrar com…" a quem não está identificado. */
   ofertaLogin?: Plataforma[];
+  /** Por que a última tentativa de login falhou (vindo de ?login=…). */
+  avisoLogin?: string;
 }) {
   const [estado, acao, pendente] = useActionState(abrirChamado, {} as EstadoAbrir);
   const [erroFoto, setErroFoto] = useState<string>();
@@ -139,10 +142,16 @@ export function FormAbrirChamado({
         </div>
       ) : ofertaLogin.length > 0 ? (
         <div className="mb-6 flex flex-col gap-3 rounded-xl border border-marca-200 bg-marca-50 p-3 sm:flex-row sm:items-center">
-          <p className="flex-1 text-sm text-marca-900">
-            <strong>Recomendado:</strong> entre com sua conta da empresa para seu nome vir preenchido e você
-            acompanhar seus chamados.
-          </p>
+          <div className="flex-1 text-sm text-marca-900">
+            {avisoLogin ? <p className="mb-2 font-semibold text-amber-800">{avisoLogin}</p> : null}
+            <p>
+              <strong>Recomendado:</strong> entre com sua conta da empresa para seu nome vir preenchido e você
+              acompanhar seus chamados.
+            </p>
+            <p className="mt-1 text-xs text-marca-800/80">
+              Se o Feishu disser que você não tem acesso, pode preencher abaixo sem entrar.
+            </p>
+          </div>
           {ofertaLogin.map((p) => (
             <a
               key={p}

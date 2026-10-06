@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LoginPlataforma } from "@/components/login-plataforma";
+import { LoginPlataforma, mensagemLogin } from "@/components/login-plataforma";
 import { PaginaPublica } from "@/components/pagina-publica";
 import { descreverSla } from "@/lib/chamados/rotulos";
 import { solicitanteAtual } from "@/lib/solicitante/atual";
@@ -54,6 +54,7 @@ export default async function PaginaAbrirChamado({ searchParams }: PageProps<"/a
       <FormAbrirChamado
         categorias={categorias ?? []}
         ofertaLogin={solicitante ? [] : plataformasAtivas()}
+        avisoLogin={solicitante ? undefined : mensagemLogin(login)}
         identidade={
           solicitante
             ? {

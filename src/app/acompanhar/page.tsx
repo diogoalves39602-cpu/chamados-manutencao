@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { LogIn } from "lucide-react";
 import { PaginaPublica } from "@/components/pagina-publica";
-import { Cartao } from "@/components/ui";
+import { mensagemLogin } from "@/components/login-plataforma";
+import { Alerta, Cartao } from "@/components/ui";
 import { solicitanteAtual } from "@/lib/solicitante/atual";
 import { PLATAFORMAS, plataformasAtivas, type Plataforma } from "@/lib/solicitante/plataformas";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
@@ -31,7 +32,8 @@ async function chamadosDoSolicitante(plataforma: Plataforma, id: string): Promis
 }
 
 export default async function PaginaAcompanhar({ searchParams }: PageProps<"/acompanhar">) {
-  const { numero } = await searchParams;
+  const { numero, login } = await searchParams;
+  const avisoLogin = mensagemLogin(login);
   const destacar = typeof numero === "string" ? numero.toUpperCase().slice(0, 20) : undefined;
   const solicitante = await solicitanteAtual();
   const plataformas = plataformasAtivas();
@@ -57,6 +59,7 @@ export default async function PaginaAcompanhar({ searchParams }: PageProps<"/aco
         )
       ) : plataformas.length > 0 ? (
         <div className="flex animate-entrar flex-col gap-2">
+          {avisoLogin ? <Alerta tipo="aviso">{avisoLogin}</Alerta> : null}
           {plataformas.map((p) => (
             <a
               key={p}
@@ -67,6 +70,9 @@ export default async function PaginaAcompanhar({ searchParams }: PageProps<"/aco
               Entrar com {PLATAFORMAS[p].nome} e ver meus chamados
             </a>
           ))}
+          <p className="px-2 text-center text-xs font-medium text-stone-600">
+            Se o Feishu disser que você não tem acesso, busque pelo telefone ou e-mail abaixo.
+          </p>
           <p className="text-center text-xs font-medium uppercase tracking-wide text-stone-400">ou</p>
         </div>
       ) : null}

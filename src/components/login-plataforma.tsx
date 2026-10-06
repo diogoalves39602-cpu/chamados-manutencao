@@ -3,11 +3,16 @@ import { Alerta, Cartao } from "@/components/ui";
 import { PLATAFORMAS, type Plataforma } from "@/lib/solicitante/plataformas";
 
 const MENSAGENS: Record<string, string> = {
-  negado: "Você não autorizou o acesso. Para abrir o chamado, toque em entrar e autorize.",
+  negado: "Você não autorizou o acesso. Para entrar, toque no botão de novo e autorize.",
   expirado: "O login demorou demais ou foi interrompido. Tente de novo.",
   erro: "Não foi possível confirmar sua conta. Tente de novo em instantes.",
   indisponivel: "Login indisponível no momento.",
 };
+
+/** Texto para o motivo de falha devolvido pelo retorno do login (?login=…). */
+export function mensagemLogin(motivo: unknown): string | undefined {
+  return typeof motivo === "string" ? MENSAGENS[motivo] : undefined;
+}
 
 /** Cartão "Entre com sua conta do Feishu/Lark" (formulário e acompanhamento). */
 export function LoginPlataforma({
@@ -32,9 +37,9 @@ export function LoginPlataforma({
         <h2 className="text-lg font-semibold text-stone-900">{titulo}</h2>
         <p className="mt-1 text-sm text-stone-600">{texto}</p>
       </div>
-      {motivo && MENSAGENS[motivo] ? (
+      {mensagemLogin(motivo) ? (
         <div className="w-full text-left">
-          <Alerta tipo="aviso">{MENSAGENS[motivo]}</Alerta>
+          <Alerta tipo="aviso">{mensagemLogin(motivo)}</Alerta>
         </div>
       ) : null}
       <div className="flex w-full flex-col gap-2">
