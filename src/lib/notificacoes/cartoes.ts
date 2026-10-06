@@ -9,6 +9,9 @@ function campo(rotulo: string, valor: string) {
   return { is_short: true, text: { tag: "lark_md", content: `**${rotulo}**\n${md(valor)}` } };
 }
 
+// Rodapé com "chamado" no corpo: bots de grupo com palavra-chave procuram a palavra no texto.
+const RODAPE = { tag: "note", elements: [{ tag: "plain_text", content: "Sistema de chamados de manutenção" }] };
+
 function botao(url: string | undefined) {
   if (!url) return [];
   return [
@@ -37,6 +40,7 @@ export function cartaoNovoChamado(c: ChamadoNotificavel, urlPainel?: string): Ca
       },
       { tag: "div", text: { tag: "lark_md", content: md(c.descricao.slice(0, 800)) } },
       ...botao(urlPainel),
+      RODAPE,
     ],
   };
 }
@@ -68,6 +72,7 @@ export function cartaoAlertaPrazo(c: ChamadoNotificavel, urlPainel?: string, ago
         ],
       },
       ...botao(urlPainel),
+      RODAPE,
     ],
   };
 }
@@ -84,6 +89,7 @@ export function cartaoTeste(nomeDestino: string): Cartao {
           content: `Destino **${md(nomeDestino)}** configurado. Enviado em ${formatarDataHora(new Date())} (horário de Brasília).`,
         },
       },
+      RODAPE,
     ],
   };
 }

@@ -95,5 +95,6 @@ test("todo cartão do grupo leva a palavra-chave \"chamado\" no título (bots co
     cartaoTeste("Grupo"),
   ]) {
     assert.match((cartao as { header: { title: { content: string } } }).header.title.content, /chamado/);
+    assert.match(JSON.stringify((cartao as { elements: unknown[] }).elements), /chamados de manutenção/);
   }
 });
