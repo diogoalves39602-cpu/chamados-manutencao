@@ -146,9 +146,10 @@ o sistema vai pedir a troca da senha. Os demais usuários são criados pelo `/ad
 - **Anti-spam**: campo invisível para robôs (honeypot) e limite de 6 chamados a cada
   10 minutos por IP.
 - Nome, setor e contato ficam lembrados no aparelho para o próximo chamado.
-- **Acompanhar** (`/acompanhar`): o solicitante consulta o andamento informando o número **e** o
-  telefone/e-mail usado na abertura (impede que alguém veja chamados alheios chutando números).
-  Mostra recebido → em atendimento → concluído, com o que foi feito.
+- **Acompanhar** (`/acompanhar`): não precisa do número do chamado. A pessoa pode **entrar com o Feishu**
+  (lista "Seus chamados") ou informar o **telefone ou e-mail** usado na abertura (lista todos os chamados
+  com aquele contato). O telefone é comparado pelos dígitos, com ou sem +55, DDD, espaços ou traços. Há
+  limite de 10 consultas a cada 10 minutos por aparelho, e a lista mostra só o andamento, nunca o contato.
 - **QR Code**: `/admin/qrcode` gera um cartaz pronto para imprimir e o link para divulgar
   nos grupos do Feishu e do Lark. Defina `APP_URL` para o QR apontar para o endereço
   definitivo.

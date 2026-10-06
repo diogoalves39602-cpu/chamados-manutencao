@@ -351,6 +351,21 @@ export type Database = {
       }
       assumir_chamado: RetornoChamado & { Args: { p_chamado_id: string } }
       cancelar_chamado: RetornoChamado & { Args: { p_chamado_id: string; p_motivo: string } }
+      chamados_por_contato: {
+        Args: { p_contato: string; p_limite?: number }
+        Returns: {
+          numero: string
+          status: Database["public"]["Enums"]["status_chamado"]
+          local: string
+          categoria: string
+          aberto_em: string
+          prazo_limite: string
+          recebido_em: string | null
+          finalizado_em: string | null
+          situacao_prazo: Database["public"]["Enums"]["situacao_prazo"] | null
+          observacao_finalizacao: string | null
+        }[]
+      }
       consumir_limite: {
         Args: { p_chave: string; p_janela_segundos: number; p_max: number }
         Returns: boolean
