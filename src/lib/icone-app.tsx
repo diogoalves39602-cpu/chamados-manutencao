@@ -1,12 +1,16 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-// Ícone do app (chave de manutenção branca sobre vermelho), desenhado em PNG
-// para a aba do navegador, a tela inicial do celular e o manifest (PWA).
-const CHAVE =
-  "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z";
+// Ícone do app (logo J&T Express) em PNG para a aba do navegador, a tela inicial
+// do celular e o manifest (PWA). Gerado no build a partir de public/logo.png.
+let logo: string | undefined;
+function logoDataUrl() {
+  logo ??= `data:image/png;base64,${readFileSync(join(process.cwd(), "public", "logo.png")).toString("base64")}`;
+  return logo;
+}
 
 export function desenharIcone(tamanho: number, arredondado = true) {
-  const icone = Math.round(tamanho * 0.58);
   return new ImageResponse(
     (
       <div
@@ -14,15 +18,13 @@ export function desenharIcone(tamanho: number, arredondado = true) {
           width: "100%",
           height: "100%",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #991b1b 0%, #b91c1c 55%, #dc2626 100%)",
+          background: "#e60012",
           borderRadius: arredondado ? tamanho * 0.22 : 0,
+          overflow: "hidden",
         }}
       >
-        <svg width={icone} height={icone} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-          <path d={CHAVE} />
-        </svg>
+        {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse só aceita <img> */}
+        <img src={logoDataUrl()} width={tamanho} height={tamanho} alt="" />
       </div>
     ),
     { width: tamanho, height: tamanho },

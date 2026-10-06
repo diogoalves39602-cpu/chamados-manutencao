@@ -86,7 +86,7 @@ export default async function Inicio() {
         <TituloArea id="area-colaborador" sobreFaixa>
           Preciso de manutenção
         </TituloArea>
-        <Opcao href="/abrir-chamado" icone={Wrench} titulo="Abrir um chamado" texto="Elétrica, hidráulica, ar, TI e mais" destaque />
+        <Opcao href="/abrir-chamado" icone={Wrench} titulo="Abrir um chamado" texto="Elétrica, hidráulica, ar, CFTV e mais" destaque />
         <Opcao
           href="/acompanhar"
           icone={Search}
