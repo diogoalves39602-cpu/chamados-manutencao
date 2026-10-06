@@ -57,8 +57,20 @@ async function resumoFila() {
   return { naFila: naFila ?? 0, atrasados: atrasados ?? 0 };
 }
 
-// Link único do sistema: colaboradores abrem e acompanham chamados; a equipe
-// logada ganha o atalho para o painel.
+function TituloArea({ id, children, sobreFaixa = false }: { id: string; children: string; sobreFaixa?: boolean }) {
+  return (
+    <h2
+      id={id}
+      className={`px-1 text-xs font-semibold uppercase tracking-wider ${sobreFaixa ? "text-marca-100" : "text-stone-500"}`}
+    >
+      {children}
+    </h2>
+  );
+}
+
+// Link único do sistema, com duas áreas:
+//  1) colaboradores (sem login): abrir e acompanhar chamados;
+//  2) equipe de manutenção e administradores: entrar (ou abrir o painel, se já logado).
 export default async function Inicio() {
   const [{ perfil }, solicitante] = await Promise.all([obterSessao(), solicitanteAtual()]);
   const equipe = perfil?.ativo && !perfil.deve_trocar_senha ? perfil : null;
@@ -70,39 +82,39 @@ export default async function Inicio() {
       titulo={primeiroNome ? `Olá, ${primeiroNome}! Como podemos ajudar?` : "Como podemos ajudar?"}
       subtitulo="Problema de manutenção? Abra um chamado: a equipe atende em até 2 horas, 24h por dia."
     >
-      <div className="flex flex-col gap-3 animate-entrar">
+      <section className="flex animate-entrar flex-col gap-3" aria-labelledby="area-colaborador">
+        <TituloArea id="area-colaborador" sobreFaixa>
+          Preciso de manutenção
+        </TituloArea>
+        <Opcao href="/abrir-chamado" icone={Wrench} titulo="Abrir um chamado" texto="Elétrica, hidráulica, ar, TI e mais" destaque />
+        <Opcao
+          href="/acompanhar"
+          icone={Search}
+          titulo={solicitante ? "Ver meus chamados" : "Consultar meus chamados"}
+          texto={solicitante ? "Todos os chamados que você abriu" : "Pelo Feishu ou pelo telefone/e-mail, sem número"}
+        />
+      </section>
+
+      <section className="mt-4 flex animate-entrar flex-col gap-3" aria-labelledby="area-equipe">
+        <TituloArea id="area-equipe">Equipe de manutenção e administradores</TituloArea>
         {equipe && fila ? (
           <Opcao
             href="/painel"
             icone={ClipboardList}
-            titulo="Abrir o painel da equipe"
-            texto={`${fila.naFila} na fila${fila.atrasados ? ` · ${fila.atrasados} atrasado${fila.atrasados === 1 ? "" : "s"}` : ""}`}
-            destaque
+            titulo="Abrir o painel"
+            texto={`${equipe.papel === "admin" ? "Administrador" : "Técnico"} · ${fila.naFila} na fila${
+              fila.atrasados ? ` · ${fila.atrasados} atrasado${fila.atrasados === 1 ? "" : "s"}` : ""
+            }`}
           />
-        ) : null}
-        <Opcao
-          href="/abrir-chamado"
-          icone={Wrench}
-          titulo="Abrir um chamado"
-          texto="Elétrica, hidráulica, ar, TI e mais"
-          destaque={!equipe}
-        />
-        <Opcao
-          href="/acompanhar"
-          icone={Search}
-          titulo={solicitante ? "Ver meus chamados" : "Acompanhar meus chamados"}
-          texto={solicitante ? "Todos os chamados que você abriu" : "Pelo Feishu ou pelo telefone/e-mail, sem número"}
-        />
-      </div>
-      {equipe ? null : (
-        <Link
-          href="/login"
-          className="mx-auto mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-200/60 hover:text-stone-800"
-        >
-          <ShieldCheck className="h-4 w-4" aria-hidden />
-          Área da equipe de manutenção
-        </Link>
-      )}
+        ) : (
+          <Opcao
+            href="/login"
+            icone={ShieldCheck}
+            titulo="Entrar no sistema"
+            texto="Acesso com usuário e senha para técnicos e administradores"
+          />
+        )}
+      </section>
     </PaginaPublica>
   );
 }
