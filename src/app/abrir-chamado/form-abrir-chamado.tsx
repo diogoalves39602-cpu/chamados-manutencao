@@ -2,10 +2,11 @@
 
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { CircleCheckBig, ImagePlus, Search, Send, X } from "lucide-react";
+import { BadgeCheck, CircleCheckBig, ImagePlus, Search, Send, X } from "lucide-react";
 import { IconeCategoria } from "@/components/icone-categoria";
 import { AreaTexto, Alerta, Botao, Campo, Cartao } from "@/components/ui";
 import { formatarDataHora } from "@/lib/datas";
+import { PLATAFORMAS, type Plataforma } from "@/lib/solicitante/plataformas";
 import { abrirChamado, type EstadoAbrir } from "./actions";
 import { comprimirFoto } from "./comprimir";
 
@@ -21,7 +22,13 @@ function TituloSecao({ numero, children }: { numero: number; children: string })
   );
 }
 
-export function FormAbrirChamado({ categorias }: { categorias: { id: number; nome: string }[] }) {
+export function FormAbrirChamado({
+  categorias,
+  identidade,
+}: {
+  categorias: { id: number; nome: string }[];
+  identidade?: { nome: string; plataforma: Plataforma; contato: string };
+}) {
   const [estado, acao, pendente] = useActionState(abrirChamado, {} as EstadoAbrir);
   const [erroFoto, setErroFoto] = useState<string>();
   const [preparando, setPreparando] = useState(false);
@@ -112,6 +119,22 @@ export function FormAbrirChamado({ categorias }: { categorias: { id: number; nom
 
   return (
     <Cartao className="animate-entrar">
+      {identidade ? (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-600 text-white">
+            <BadgeCheck className="h-5 w-5" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-emerald-950">{identidade.nome}</p>
+            <p className="text-xs text-emerald-800">Identificado pela conta do {PLATAFORMAS[identidade.plataforma].nome}</p>
+          </div>
+          <form action="/auth/sair" method="post">
+            <button type="submit" className="rounded-lg px-2 py-1.5 text-xs font-semibold text-emerald-900 hover:bg-emerald-100">
+              Não é você?
+            </button>
+          </form>
+        </div>
+      ) : null}
       <form ref={formRef} onSubmit={enviar} className="flex flex-col gap-6" noValidate>
         {estado.erro ? <Alerta>{estado.erro}</Alerta> : null}
 
@@ -125,7 +148,9 @@ export function FormAbrirChamado({ categorias }: { categorias: { id: number; nom
           <legend className="contents">
             <TituloSecao numero={1}>Seus dados</TituloSecao>
           </legend>
-          <Campo id="solicitante_nome" name="solicitante_nome" rotulo="Seu nome" autoComplete="name" required maxLength={120} erro={estado.erros?.solicitante_nome} />
+          {identidade ? null : (
+            <Campo id="solicitante_nome" name="solicitante_nome" rotulo="Seu nome" autoComplete="name" required maxLength={120} erro={estado.erros?.solicitante_nome} />
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo id="solicitante_setor" name="solicitante_setor" rotulo="Setor" required maxLength={80} erro={estado.erros?.solicitante_setor} />
             <Campo
@@ -135,6 +160,8 @@ export function FormAbrirChamado({ categorias }: { categorias: { id: number; nom
               autoComplete="tel"
               required
               maxLength={120}
+              defaultValue={identidade?.contato || undefined}
+              ajuda={identidade ? "Para a equipe falar com você durante o atendimento." : undefined}
               erro={estado.erros?.solicitante_contato}
             />
           </div>

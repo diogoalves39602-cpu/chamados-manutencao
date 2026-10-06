@@ -25,7 +25,12 @@ export async function salvarFoto(foto: File): Promise<string> {
  * Prazo, turno e número são definidos pelo banco. A notificação ao grupo sai
  * logo após a resposta; se falhar, o cron reenvia no minuto seguinte.
  */
-export async function registrarChamado(dados: NovoChamado, origem: Origem, fotoPath?: string) {
+export async function registrarChamado(
+  dados: NovoChamado,
+  origem: Origem,
+  fotoPath?: string,
+  identidade?: { plataforma: "feishu" | "lark"; id: string },
+) {
   const { data, error } = await criarClienteAdmin().rpc("abrir_chamado", {
     p_solicitante_nome: dados.solicitante_nome,
     p_solicitante_setor: dados.solicitante_setor,
@@ -35,6 +40,8 @@ export async function registrarChamado(dados: NovoChamado, origem: Origem, fotoP
     p_descricao: dados.descricao,
     p_origem: origem,
     p_foto_path: fotoPath,
+    p_solicitante_plataforma: identidade?.plataforma,
+    p_solicitante_externo_id: identidade?.id,
   });
   if (error || !data) throw new Error(error?.message ?? "Falha ao abrir o chamado.");
 

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, CircleCheck, Clock, Hand, MapPin, User, UserCheck } from "lucide-react";
+import { BadgeCheck, ChevronRight, CircleCheck, Clock, Hand, MapPin, User, UserCheck } from "lucide-react";
 import { enviarSemReset } from "@/components/envio";
 import { IconeCategoria } from "@/components/icone-categoria";
 import { SeloPrazo } from "@/components/selo-prazo";
@@ -58,6 +58,9 @@ export function CartaoChamado({
         <span className="inline-flex items-center gap-1">
           <User className="h-3.5 w-3.5" aria-hidden />
           {c.solicitante_nome} · {c.solicitante_setor}
+          {c.solicitante_externo_id ? (
+            <BadgeCheck className="h-3.5 w-3.5 text-emerald-600" aria-label="Identificado pelo Feishu/Lark" />
+          ) : null}
         </span>
         <span className="inline-flex items-center gap-1">
           <UserCheck className="h-3.5 w-3.5" aria-hidden />

@@ -101,7 +101,7 @@ test("planilha: abas, cabeçalhos e datas no fuso de São Paulo", () => {
   assert.equal(linhas[0][0], "Número");
   assert.equal(linhas[1][0], "CH-000001");
   assert.equal(linhas[1][2], "Dentro do prazo");
-  assert.equal(linhas[1][11], "05/10/2026 12:30"); // Aberto em
+  assert.equal(linhas[1][12], "05/10/2026 12:30"); // Aberto em
 
   const resumo = XLSX.utils.sheet_to_json<string[]>(livro.Sheets.Resumo, { header: 1, raw: false });
   const texto = resumo.map((l) => l.join(" | ")).join("\n");

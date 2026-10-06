@@ -65,7 +65,7 @@ export type DadosPlanilha = {
 function abaChamados(chamados: ChamadoCompleto[]) {
   const cab = [
     "Número", "Status", "Situação do prazo", "Origem", "Turno", "Categoria", "Local",
-    "Solicitante", "Setor", "Contato", "Descrição", "Aberto em", "Prazo limite", "SLA (min)",
+    "Solicitante", "Setor", "Contato", "Identificado via", "Descrição", "Aberto em", "Prazo limite", "SLA (min)",
     "Recebido por", "Recebido em", "Tempo até assumir (min)", "Finalizado por", "Finalizado em",
     "Tempo total (min)", "Observação da finalização", "Cancelado por", "Cancelado em", "Motivo do cancelamento",
   ];
@@ -80,6 +80,7 @@ function abaChamados(chamados: ChamadoCompleto[]) {
     c.solicitante_nome,
     c.solicitante_setor,
     c.solicitante_contato,
+    c.solicitante_plataforma === "lark" ? "Lark" : c.solicitante_plataforma === "feishu" ? "Feishu" : "—",
     c.descricao,
     celulaDataHora(c.aberto_em),
     celulaDataHora(c.prazo_limite),

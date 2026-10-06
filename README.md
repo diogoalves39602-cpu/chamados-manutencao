@@ -31,6 +31,7 @@ Realtime, Storage, pg_cron) · Zod · SheetJS. Roda inteiramente em planos gratu
 12. [Testes](#12-testes)
 13. [Backup e limites do plano gratuito](#13-backup-e-limites-do-plano-gratuito)
 14. [Deploy (Vercel e Netlify)](#14-deploy-vercel-e-netlify)
+15. [Login com Feishu/Lark para quem abre chamado](#15-login-com-feishulark-para-quem-abre-chamado)
 
 ---
 
@@ -470,3 +471,41 @@ O código não usa nada específico de plataforma, então funciona na Vercel e n
 - [ ] Dados de exemplo removidos (seção 11)
 - [ ] Secrets do GitHub para backup configurados e um backup manual executado
 - [ ] QR Code impresso com o endereço definitivo
+
+## 15. Login com Feishu/Lark para quem abre chamado
+
+Com o app do Feishu configurado, o formulário `/abrir-chamado` passa a exigir login com a conta da
+empresa. O chamado grava o **nome real** e o **ID do Feishu** de quem abriu, e a pessoa não consegue
+alterar esses dados. Telefone e setor continuam editáveis. Em `/acompanhar`, quem está identificado
+vê a lista "Seus chamados". No painel, aparece o selo "Verificado pelo Feishu"; no Excel, a coluna
+"Identificado via".
+
+- A sessão do solicitante é um cookie `httpOnly` assinado (HMAC-SHA256, `SESSAO_SECRET`), válido por
+  30 dias, separado do login da equipe.
+- Sem `FEISHU_APP_ID`/`FEISHU_APP_SECRET`, o formulário funciona como antes, sem login.
+- O webhook (Base do Feishu/Lark, API) continua aceitando chamados sem login, autenticado pelo token do canal.
+
+### Criar o app no Feishu (administrador da empresa, cerca de 10 min)
+
+1. Acesse **https://open.feishu.cn/app** → **Create Custom App** (企业自建应用).
+   Nome: "Chamados de Manutenção"; ícone: o do sistema (`/icon/512`).
+2. **Credentials & Basic Info** (凭证与基础信息): copie o **App ID** (`cli_...`) e o **App Secret**.
+3. **Add features → Web App** (网页应用). Em *Desktop/Mobile homepage*, coloque
+   `https://chamados-manutencao.netlify.app/abrir-chamado`. Assim o sistema também aparece na área
+   de aplicativos (*Workplace*) do Feishu.
+4. **Security Settings** (安全设置) → **Redirect URLs**: adicione
+   `https://chamados-manutencao.netlify.app/auth/feishu/retorno`.
+5. (Opcional) **Permissions & Scopes** (权限管理): para trazer e-mail e celular, habilite
+   `contact:user.email:readonly` e `contact:user.phone:readonly` e defina
+   `FEISHU_SCOPES=contact:user.email:readonly contact:user.phone:readonly`.
+6. **Version Management & Release** (版本管理与发布): crie uma versão, escolha a disponibilidade
+   **"Todos os membros"** e publique. O administrador aprova no Admin Console.
+7. No Netlify (*Project configuration → Environment variables*), cadastre `FEISHU_APP_ID` e
+   `FEISHU_APP_SECRET` (marque como *secret*) e faça um novo deploy (*Deploys → Trigger deploy*).
+
+Como o app é "próprio" da empresa, só pessoas da empresa conseguem autorizar. Para travar ainda
+mais, defina `FEISHU_TENANT_KEY` com o `tenant_key` da empresa.
+
+**Lark (open.larksuite.com):** o processo é o mesmo, em https://open.larksuite.com/app, com a URL de
+retorno `https://chamados-manutencao.netlify.app/auth/lark/retorno` e as variáveis `LARK_APP_ID` e
+`LARK_APP_SECRET`. Com os dois configurados, a tela de login mostra os dois botões.

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
+  BadgeCheck,
   Ban,
   CalendarDays,
   CircleCheck,
@@ -231,6 +232,13 @@ export default async function DetalheChamado({ params }: PageProps<"/painel/[num
           <dl className="flex flex-col gap-4">
             <Info icone={User} rotulo="Solicitante">
               {c.solicitante_nome} · {c.solicitante_setor}
+              {c.solicitante_plataforma ? (
+                <span className="mt-1 flex">
+                  <Selo className="bg-emerald-100 text-emerald-800" icone={BadgeCheck}>
+                    Verificado pelo {c.solicitante_plataforma === "lark" ? "Lark" : "Feishu"}
+                  </Selo>
+                </span>
+              ) : null}
               <span className="block text-stone-600">{c.solicitante_contato}</span>
               <LinksContato contato={c.solicitante_contato} />
             </Info>

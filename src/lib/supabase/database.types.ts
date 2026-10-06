@@ -32,7 +32,9 @@ type ChamadoRow = {
   situacao_prazo: Database["public"]["Enums"]["situacao_prazo"] | null
   sla_minutos: number
   solicitante_contato: string
+  solicitante_externo_id: string | null
   solicitante_nome: string
+  solicitante_plataforma: "feishu" | "lark" | null
   solicitante_setor: string
   status: Database["public"]["Enums"]["status_chamado"]
   tempo_ate_assumir_minutos: number | null
@@ -341,6 +343,8 @@ export type Database = {
           p_local: string
           p_origem: Database["public"]["Enums"]["origem_chamado"]
           p_solicitante_contato: string
+          p_solicitante_externo_id?: string
+          p_solicitante_plataforma?: string
           p_solicitante_nome: string
           p_solicitante_setor: string
         }
