@@ -513,3 +513,26 @@ mais, defina `FEISHU_TENANT_KEY` com o `tenant_key` da empresa.
 **Lark (open.larksuite.com):** o processo é o mesmo, em https://open.larksuite.com/app, com a URL de
 retorno `https://chamados-manutencao.netlify.app/auth/lark/retorno` e as variáveis `LARK_APP_ID` e
 `LARK_APP_SECRET`. Com os dois configurados, a tela de login mostra os dois botões.
+
+## 16. Admin → Chamados e mensagens ao solicitante
+
+- **Admin → Chamados**: histórico completo, com busca (número, nome, setor, telefone, local, descrição),
+  filtros (status, período, identificação) e exportação Excel. Cada linha mostra o solicitante, o
+  contato e, quando ele entrou com o Feishu/Lark, o selo de verificado e o **ID do Feishu** (open_id).
+- **Enviar mensagem ao solicitante** (tela do chamado, para toda a equipe): modelos prontos
+  ("Recebemos", "Técnico a caminho", "Preciso de informações", "Concluído") ou texto livre.
+  - **Feishu/Lark:** enviada direto pelo bot do app da empresa, só para quem abriu o chamado
+    identificado. Grátis.
+  - **WhatsApp:** abre a conversa (wa.me) com o texto pronto, e quem atende toca em enviar. A API
+    oficial que envia automaticamente é paga, por isso não é usada.
+  - Tudo fica registrado no chamado ("Mensagens enviadas"), com status e quem enviou.
+
+### Ativar o envio pelo Feishu (no app `cli_aa4e4e50f2b89d05`)
+
+1. **Add features → Bot** (机器人): adicione o recurso Bot.
+2. **Permissions & Scopes** (权限管理): habilite `im:message:send_as_bot`.
+3. **Version Management & Release** (版本管理与发布): crie uma versão disponível para todos os membros
+   e envie para aprovação. O administrador do Feishu aprova no Admin Console.
+
+Até isso ser feito, o botão "Enviar pelo Feishu" mostra o motivo do erro, por exemplo "o app ainda
+não tem o recurso Bot ativado", e a mensagem fica registrada como "Falhou".
