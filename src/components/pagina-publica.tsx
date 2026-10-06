@@ -29,7 +29,10 @@ export function PaginaPublica({
         </div>
       </div>
       <main className={`mx-auto -mt-20 flex w-full ${largura} flex-1 flex-col gap-4 px-4 pb-10`}>{children}</main>
-      <footer className="pb-6 text-center text-xs text-stone-400">Atendimento 24 horas, todos os dias</footer>
+      <footer className="pb-6 text-center text-xs text-stone-400">
+        <p>Atendimento 24 horas, todos os dias</p>
+        <p className="mt-1">Desenvolvido por Diogo Alves</p>
+      </footer>
     </div>
   );
 }

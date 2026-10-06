@@ -50,7 +50,8 @@ export default async function LayoutEquipe({ children }: LayoutProps<"/">) {
           </details>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 sm:pb-10 sm:pt-6">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-6 pt-5 sm:pt-6">{children}</main>
+      <footer className="pb-28 text-center text-xs text-stone-400 sm:pb-6 print:hidden">Desenvolvido por Diogo Alves</footer>
       <NavegacaoInferior ehAdmin={ehAdmin} />
     </div>
   );
