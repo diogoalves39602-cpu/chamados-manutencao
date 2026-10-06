@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { BadgeCheck, CircleCheckBig, ImagePlus, Search, Send, X } from "lucide-react";
+import { BadgeCheck, CircleCheckBig, ImagePlus, LogIn, Search, Send, X } from "lucide-react";
 import { IconeCategoria } from "@/components/icone-categoria";
 import { AreaTexto, Alerta, Botao, Campo, Cartao } from "@/components/ui";
 import { formatarDataHora } from "@/lib/datas";
@@ -25,9 +25,12 @@ function TituloSecao({ numero, children }: { numero: number; children: string })
 export function FormAbrirChamado({
   categorias,
   identidade,
+  ofertaLogin = [],
 }: {
   categorias: { id: number; nome: string }[];
   identidade?: { nome: string; plataforma: Plataforma; contato: string };
+  /** Login opcional: plataformas para oferecer "Entrar com…" a quem não está identificado. */
+  ofertaLogin?: Plataforma[];
 }) {
   const [estado, acao, pendente] = useActionState(abrirChamado, {} as EstadoAbrir);
   const [erroFoto, setErroFoto] = useState<string>();
@@ -133,6 +136,23 @@ export function FormAbrirChamado({
               Não é você?
             </button>
           </form>
+        </div>
+      ) : ofertaLogin.length > 0 ? (
+        <div className="mb-6 flex flex-col gap-3 rounded-xl border border-marca-200 bg-marca-50 p-3 sm:flex-row sm:items-center">
+          <p className="flex-1 text-sm text-marca-900">
+            <strong>Recomendado:</strong> entre com sua conta da empresa para seu nome vir preenchido e você
+            acompanhar seus chamados.
+          </p>
+          {ofertaLogin.map((p) => (
+            <a
+              key={p}
+              href={`/auth/${p}/entrar?voltar=${encodeURIComponent("/abrir-chamado")}`}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-marca-700 px-4 text-sm font-semibold text-white hover:bg-marca-800"
+            >
+              <LogIn className="h-4 w-4" aria-hidden />
+              Entrar com {PLATAFORMAS[p].nome}
+            </a>
+          ))}
         </div>
       ) : null}
       <form ref={formRef} onSubmit={enviar} className="flex flex-col gap-6" noValidate>

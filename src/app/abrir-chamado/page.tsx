@@ -53,6 +53,7 @@ export default async function PaginaAbrirChamado({ searchParams }: PageProps<"/a
     <PaginaPublica titulo="Abrir chamado" subtitulo={subtitulo}>
       <FormAbrirChamado
         categorias={categorias ?? []}
+        ofertaLogin={solicitante ? [] : plataformasAtivas()}
         identidade={
           solicitante
             ? {
