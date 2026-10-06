@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "QR Code do formulário" };
 
 // Cartaz para imprimir e colar nos ambientes, e link para divulgar no Feishu/Lark.
 export default async function PaginaQrCode() {
-  const url = `${await urlBase()}/abrir-chamado`;
+  const url = `${await urlBase()}/`;
   const svg = await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", width: 320 });
   const { data: config } = await (await criarClienteServidor()).from("configuracoes").select("sla_minutos").single();
   const prazo = descreverSla(config?.sla_minutos ?? 120);
@@ -45,7 +45,7 @@ export default async function PaginaQrCode() {
           aria-label={`QR Code para ${url}`}
           dangerouslySetInnerHTML={{ __html: svg }}
         />
-        <p className="break-all font-mono text-sm">{url}</p>
+        <p className="break-all font-mono text-sm">{url.replace(/\/$/, "")}</p>
         <p className="text-sm font-semibold text-marca-800">Atendimento 24 horas · prazo de até {prazo}</p>
         </div>
       </section>

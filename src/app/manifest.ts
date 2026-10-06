@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Chamados",
     description: "Abertura e acompanhamento de chamados de manutenção com prazo de 2 horas.",
     lang: "pt-BR",
-    start_url: "/painel",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

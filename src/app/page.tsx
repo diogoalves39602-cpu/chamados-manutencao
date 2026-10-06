@@ -1,7 +1,10 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRight, Search, ShieldCheck, Wrench } from "lucide-react";
+import { ArrowRight, ClipboardList, Search, ShieldCheck, Wrench } from "lucide-react";
 import { PaginaPublica } from "@/components/pagina-publica";
+import { obterSessao } from "@/lib/auth/sessao";
+import { solicitanteAtual } from "@/lib/solicitante/atual";
+import { criarClienteServidor } from "@/lib/supabase/server";
 
 function Opcao({
   href,
@@ -39,23 +42,67 @@ function Opcao({
   );
 }
 
-export default function Inicio() {
+// Fila atual para o atalho da equipe (RLS: só a equipe enxerga).
+async function resumoFila() {
+  const supabase = await criarClienteServidor();
+  const agora = new Date().toISOString();
+  const [{ count: naFila }, { count: atrasados }] = await Promise.all([
+    supabase.from("chamados").select("id", { count: "exact", head: true }).in("status", ["aberto", "em_andamento"]),
+    supabase
+      .from("chamados")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["aberto", "em_andamento"])
+      .lt("prazo_limite", agora),
+  ]);
+  return { naFila: naFila ?? 0, atrasados: atrasados ?? 0 };
+}
+
+// Link único do sistema: colaboradores abrem e acompanham chamados; a equipe
+// logada ganha o atalho para o painel.
+export default async function Inicio() {
+  const [{ perfil }, solicitante] = await Promise.all([obterSessao(), solicitanteAtual()]);
+  const equipe = perfil?.ativo && !perfil.deve_trocar_senha ? perfil : null;
+  const fila = equipe ? await resumoFila() : null;
+  const primeiroNome = (equipe?.nome ?? solicitante?.nome)?.split(" ")[0];
+
   return (
     <PaginaPublica
-      titulo="Como podemos ajudar?"
+      titulo={primeiroNome ? `Olá, ${primeiroNome}! Como podemos ajudar?` : "Como podemos ajudar?"}
       subtitulo="Problema de manutenção? Abra um chamado: a equipe atende em até 2 horas, 24h por dia."
     >
       <div className="flex flex-col gap-3 animate-entrar">
-        <Opcao href="/abrir-chamado" icone={Wrench} titulo="Abrir um chamado" texto="Elétrica, hidráulica, ar, TI e mais" destaque />
-        <Opcao href="/acompanhar" icone={Search} titulo="Acompanhar meu chamado" texto="Consulte o status pelo número" />
+        {equipe && fila ? (
+          <Opcao
+            href="/painel"
+            icone={ClipboardList}
+            titulo="Abrir o painel da equipe"
+            texto={`${fila.naFila} na fila${fila.atrasados ? ` · ${fila.atrasados} atrasado${fila.atrasados === 1 ? "" : "s"}` : ""}`}
+            destaque
+          />
+        ) : null}
+        <Opcao
+          href="/abrir-chamado"
+          icone={Wrench}
+          titulo="Abrir um chamado"
+          texto="Elétrica, hidráulica, ar, TI e mais"
+          destaque={!equipe}
+        />
+        <Opcao
+          href="/acompanhar"
+          icone={Search}
+          titulo={solicitante ? "Ver meus chamados" : "Acompanhar meus chamados"}
+          texto={solicitante ? "Todos os chamados que você abriu" : "Pelo Feishu ou pelo telefone/e-mail, sem número"}
+        />
       </div>
-      <Link
-        href="/login"
-        className="mx-auto mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-200/60 hover:text-stone-800"
-      >
-        <ShieldCheck className="h-4 w-4" aria-hidden />
-        Área da equipe de manutenção
-      </Link>
+      {equipe ? null : (
+        <Link
+          href="/login"
+          className="mx-auto mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-200/60 hover:text-stone-800"
+        >
+          <ShieldCheck className="h-4 w-4" aria-hidden />
+          Área da equipe de manutenção
+        </Link>
+      )}
     </PaginaPublica>
   );
 }

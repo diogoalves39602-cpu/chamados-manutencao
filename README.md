@@ -1,5 +1,8 @@
 # Sistema de Chamados de Manutenção (SLA de 2h, operação 24/7)
 
+**Link único:** https://chamados-manutencao.netlify.app — colaboradores abrem e acompanham chamados;
+a equipe logada vê o atalho para o painel. É o mesmo endereço do QR Code, do app instalado e do app do Feishu.
+
 Sistema web para a equipe de manutenção receber, atender e acompanhar chamados.
 Todo chamado deve ser finalizado em até **2 horas** após a abertura, contadas em relógio
 corrido (24/7, sem pausa em fins de semana ou feriados).
@@ -492,7 +495,7 @@ vê a lista "Seus chamados". No painel, aparece o selo "Verificado pelo Feishu";
    Nome: "Chamados de Manutenção"; ícone: o do sistema (`/icon/512`).
 2. **Credentials & Basic Info** (凭证与基础信息): copie o **App ID** (`cli_...`) e o **App Secret**.
 3. **Add features → Web App** (网页应用). Em *Desktop/Mobile homepage*, coloque
-   `https://chamados-manutencao.netlify.app/abrir-chamado`. Assim o sistema também aparece na área
+   `https://chamados-manutencao.netlify.app` (o link único). Assim o sistema também aparece na área
    de aplicativos (*Workplace*) do Feishu.
 4. **Security Settings** (安全设置) → **Redirect URLs**: adicione
    `https://chamados-manutencao.netlify.app/auth/feishu/retorno`.
