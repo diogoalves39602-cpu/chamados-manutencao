@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { registrarChamado, salvarFoto } from "@/lib/chamados/abrir";
-import { FOTO_MAX_BYTES, FOTO_TIPOS, novoChamadoSchema } from "@/lib/chamados/validacao";
+import { formularioChamadoSchema, FOTO_MAX_BYTES, FOTO_TIPOS, novoChamadoSchema } from "@/lib/chamados/validacao";
 import { dentroDoLimite, obterIp, sha256 } from "@/lib/seguranca";
 import { solicitanteAtual } from "@/lib/solicitante/atual";
 import { formularioExigeLogin } from "@/lib/solicitante/plataformas";
@@ -35,9 +35,19 @@ export async function abrirChamado(_: EstadoAbrir, formData: FormData): Promise<
     return { erro: "Sua sessão expirou. Recarregue a página e entre com sua conta para abrir o chamado." };
   }
 
-  const dados = novoChamadoSchema.safeParse({
+  // Obrigatório: estar identificado pelo Feishu/Lark OU informar telefone/e-mail válido.
+  // Identificado e sem contato digitado: usa o celular/e-mail da conta (ou a própria conta).
+  const contatoDigitado = String(formData.get("solicitante_contato") ?? "").trim();
+  const schema = solicitante && !contatoDigitado ? novoChamadoSchema : formularioChamadoSchema;
+  const dados = schema.safeParse({
     ...Object.fromEntries(formData),
-    ...(solicitante ? { solicitante_nome: solicitante.nome } : {}),
+    ...(solicitante
+      ? {
+          solicitante_nome: solicitante.nome,
+          solicitante_contato:
+            contatoDigitado || solicitante.celular || solicitante.email || `Feishu: ${solicitante.nome}`.slice(0, 120),
+        }
+      : {}),
   });
   if (!dados.success) {
     const campos = z.flattenError(dados.error).fieldErrors;

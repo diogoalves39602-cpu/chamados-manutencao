@@ -69,3 +69,13 @@ test("mensagem de reprovação leva o motivo (com ponto final) e o link para abr
   );
   assert.equal(dadosModelo({ ...d, solicitante_nome: "A", prazo_limite: "2026-10-06T20:21:00Z", motivo_cancelamento: null }, "x").motivo, undefined);
 });
+
+test("contato do formulário: telefone com DDD ou e-mail válido", async () => {
+  const { contatoSchema } = await import("../src/lib/chamados/validacao");
+  for (const ok of ["11 98888-7777", "(16) 98171-7992", "+55 16 98171-7992", "1633334444", "nome@empresa.com"]) {
+    assert.ok(contatoSchema.safeParse(ok).success, ok);
+  }
+  for (const ruim of ["", "   ", "ramal 20", "98888-7777", "nome@", "nome@empresa", "11 9888a-7777"]) {
+    assert.ok(!contatoSchema.safeParse(ruim).success, ruim);
+  }
+});

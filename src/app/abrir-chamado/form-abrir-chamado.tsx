@@ -185,12 +185,17 @@ export function FormAbrirChamado({
             <Campo
               id="solicitante_contato"
               name="solicitante_contato"
-              rotulo="Telefone ou e-mail"
+              rotulo={identidade ? "Telefone ou e-mail (opcional)" : "Telefone ou e-mail *"}
               autoComplete="tel"
-              required
+              required={!identidade}
               maxLength={120}
+              placeholder="Ex.: 11 98888-7777"
               defaultValue={identidade?.contato || undefined}
-              ajuda={identidade ? "Para a equipe falar com você durante o atendimento." : undefined}
+              ajuda={
+                identidade
+                  ? "Você já está identificado pelo Feishu. Informe se quiser que a equipe também fale com você por telefone ou WhatsApp."
+                  : "Obrigatório: telefone com DDD ou e-mail. É por ele que a equipe fala com você e que você consulta seus chamados."
+              }
               erro={estado.erros?.solicitante_contato}
             />
           </div>
