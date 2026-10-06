@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { dentroDoLimite, obterIp, sha256 } from "@/lib/seguranca";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
-import type { ChamadoSolicitante } from "./lista-chamados";
+import { chamadosPorNumeros, type ChamadoSolicitante } from "@/lib/solicitante/chamados";
 
 export type EstadoConsulta = { erro?: string; chamados?: ChamadoSolicitante[]; contato?: string };
 
@@ -20,7 +20,7 @@ const contatoSchema = z
 /**
  * Consulta pública por telefone ou e-mail (para quem esqueceu o número do chamado).
  * Limite de consultas por aparelho para impedir varredura de telefones; a lista
- * mostra só o andamento, nunca o contato de ninguém.
+ * mostra o andamento e os detalhes do chamado, nunca o contato de ninguém.
  */
 export async function consultarPorContato(_: EstadoConsulta, formData: FormData): Promise<EstadoConsulta> {
   const contato = contatoSchema.safeParse(formData.get("contato"));
@@ -36,5 +36,5 @@ export async function consultarPorContato(_: EstadoConsulta, formData: FormData)
     console.error("chamados_por_contato:", error.message);
     return { erro: "Não foi possível consultar agora. Tente de novo em instantes." };
   }
-  return { chamados: data ?? [], contato: contato.data };
+  return { chamados: await chamadosPorNumeros((data ?? []).map((c) => c.numero)), contato: contato.data };
 }

@@ -4,32 +4,15 @@ import { PaginaPublica } from "@/components/pagina-publica";
 import { mensagemLogin } from "@/components/login-plataforma";
 import { Alerta, Cartao } from "@/components/ui";
 import { solicitanteAtual } from "@/lib/solicitante/atual";
-import { PLATAFORMAS, plataformasAtivas, type Plataforma } from "@/lib/solicitante/plataformas";
-import { criarClienteAdmin } from "@/lib/supabase/admin";
+import { chamadosDaConta } from "@/lib/solicitante/chamados";
+import { PLATAFORMAS, plataformasAtivas } from "@/lib/solicitante/plataformas";
 import { FormAcompanhar } from "./form-acompanhar";
-import { ListaChamados, type ChamadoSolicitante } from "./lista-chamados";
+import { ListaChamados } from "./lista-chamados";
 
 export const metadata: Metadata = {
   title: "Acompanhar chamado",
   description: "Consulte o andamento dos seus chamados de manutenção.",
 };
-
-// Chamados de quem está identificado pelo Feishu/Lark (somente os dele).
-async function chamadosDoSolicitante(plataforma: Plataforma, id: string): Promise<ChamadoSolicitante[]> {
-  const { data } = await criarClienteAdmin()
-    .from("chamados")
-    .select(
-      "numero, status, local, aberto_em, prazo_limite, recebido_em, finalizado_em, situacao_prazo, observacao_finalizacao, categoria:categorias(nome)",
-    )
-    .eq("solicitante_plataforma", plataforma)
-    .eq("solicitante_externo_id", id)
-    .order("aberto_em", { ascending: false })
-    .limit(20);
-  return (data ?? []).map(({ categoria, ...c }) => ({
-    ...c,
-    categoria: (categoria as unknown as { nome: string } | null)?.nome ?? "—",
-  }));
-}
 
 export default async function PaginaAcompanhar({ searchParams }: PageProps<"/acompanhar">) {
   const { numero, login } = await searchParams;
@@ -37,7 +20,7 @@ export default async function PaginaAcompanhar({ searchParams }: PageProps<"/aco
   const destacar = typeof numero === "string" ? numero.toUpperCase().slice(0, 20) : undefined;
   const solicitante = await solicitanteAtual();
   const plataformas = plataformasAtivas();
-  const meus = solicitante ? await chamadosDoSolicitante(solicitante.plataforma, solicitante.id) : [];
+  const meus = solicitante ? await chamadosDaConta(solicitante.plataforma, solicitante.id) : [];
 
   return (
     <PaginaPublica
