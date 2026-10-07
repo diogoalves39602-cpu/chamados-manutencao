@@ -7,7 +7,7 @@ import { lerFiltrosDashboard, obterIndicadores } from "@/lib/indicadores";
 import { gerarPlanilha } from "@/lib/planilha";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
-// GET /api/exportar?periodo=7d&categoria=…&tecnico=…&turno=…  → .xlsx com o filtro do dashboard.
+// GET /api/exportar?periodo=7d&categoria=…&tecnico=…&turno=…  → .xlsx com o filtro do dashboard (só administradores).
 export const maxDuration = 30;
 
 const PAGINA = 1000; // limite de linhas por consulta do PostgREST
@@ -17,6 +17,9 @@ export async function GET(request: NextRequest) {
   const { perfil } = await obterSessao();
   if (!perfil?.ativo || perfil.deve_trocar_senha) {
     return NextResponse.json({ erro: "Acesso restrito à equipe." }, { status: 401 });
+  }
+  if (perfil.papel !== "admin") {
+    return NextResponse.json({ erro: "Exportação restrita a administradores." }, { status: 403 });
   }
 
   const filtros = lerFiltrosDashboard(Object.fromEntries(request.nextUrl.searchParams));

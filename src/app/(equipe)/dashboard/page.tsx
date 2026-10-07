@@ -18,7 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { CabecalhoPagina, Cartao } from "@/components/ui";
-import { exigirEquipe } from "@/lib/auth/sessao";
+import { exigirAdmin } from "@/lib/auth/sessao";
 import { listarCategorias, listarTecnicos } from "@/lib/chamados/consultas";
 import { formatarDuracao, ROTULO_ORIGEM } from "@/lib/chamados/rotulos";
 import { formatarData, formatarDataHora, ROTULO_PERIODO } from "@/lib/datas";
@@ -92,7 +92,7 @@ function TituloCartao({ icone: Icone, titulo, subtitulo }: { icone: LucideIcon; 
 }
 
 export default async function Dashboard({ searchParams }: PageProps<"/dashboard">) {
-  await exigirEquipe();
+  await exigirAdmin(); // Indicadores: só administradores (técnico volta para o Painel)
   const filtros = lerFiltrosDashboard(await searchParams);
   const supabase = await criarClienteServidor();
   const [ind, cancelados, atrasados, categorias, tecnicos, { data: turnos }] = await Promise.all([

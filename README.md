@@ -107,7 +107,10 @@ Os nomes dos arquivos correspondem às versões registradas no Supabase.
 | Abrir chamado | via servidor (formulário/webhook) | — | — |
 | Ver chamados e histórico | ✗ | ✓ | ✓ |
 | Assumir / finalizar | ✗ | ✓ (RPC) | ✓ (RPC) |
-| Reatribuir / cancelar (motivo obrigatório) | ✗ | ✗ | ✓ (RPC) |
+| Reatribuir / reprovar (motivo obrigatório) | ✗ | ✗ | ✓ (RPC) |
+| Telas: Painel | ✗ | ✓ | ✓ |
+| Telas: Indicadores e exportação Excel | ✗ | ✗ (volta para o Painel) | ✓ |
+| Telas: Admin | ✗ | ✗ (volta para o Painel) | ✓ |
 | SLA, categorias, turnos, tokens, destinos, usuários | ✗ | leitura parcial | ✓ |
 
 O público não acessa as tabelas diretamente. O formulário e o webhook chamam a RPC

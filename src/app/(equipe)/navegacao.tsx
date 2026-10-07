@@ -6,7 +6,7 @@ import { ClipboardList, LayoutDashboard, Settings } from "lucide-react";
 
 const ITENS = [
   { href: "/painel", rotulo: "Painel", icone: ClipboardList },
-  { href: "/dashboard", rotulo: "Indicadores", icone: LayoutDashboard },
+  { href: "/dashboard", rotulo: "Indicadores", icone: LayoutDashboard, soAdmin: true },
   { href: "/admin", rotulo: "Admin", icone: Settings, soAdmin: true },
 ];
 
