@@ -6,7 +6,10 @@ import { formatarPct, pctDentro, type Grupo } from "@/lib/indicadores-calculo";
 export const COR = {
   dentro: "#2a78d6",
   fora: "#eb6834",
-  pendente: "#c3c2b7",
+  pendente: "#c3c2b7", // linha de base do eixo
+  reprovado: "#4a3aa7",
+  emAberto: "#eda100",
+  atrasado: "#e34948",
   barra: "#2a78d6",
   grade: "#e1e0d9",
 } as const;
@@ -31,63 +34,64 @@ function rotuloDia(iso: string) {
   return `${d}/${m}`;
 }
 
-/** Colunas empilhadas por dia: no prazo × fora do prazo × ainda em aberto. */
+// Gráfico diário: 5 partes empilhadas (encerrados embaixo, pendentes em cima).
+// Ordem validada (dataviz validate_palette, modo claro): CVD e visão normal acima do mínimo
+// entre vizinhos; o amarelo tem contraste < 3:1, por isso a dica e a tabela trazem os números.
+const SERIES_DIA = [
+  { chave: "dentro", rotulo: "Finalizados no prazo", cor: COR.dentro, valor: (d: Grupo) => d.dentro },
+  { chave: "fora", rotulo: "Finalizados fora do prazo", cor: COR.fora, valor: (d: Grupo) => d.fora },
+  { chave: "reprovados", rotulo: "Reprovados", cor: COR.reprovado, valor: (d: Grupo) => d.cancelados },
+  {
+    chave: "aberto",
+    rotulo: "Em aberto (no prazo)",
+    cor: COR.emAberto,
+    valor: (d: Grupo) => Math.max(0, d.abertos + d.em_andamento - d.atrasados),
+  },
+  { chave: "atrasados", rotulo: "Atrasados (em aberto)", cor: COR.atrasado, valor: (d: Grupo) => d.atrasados },
+] as const;
+
+/** Colunas empilhadas por dia de abertura, com todos os status. */
 export function GraficoDiario({ dias }: { dias: Grupo[] }) {
-  const maximo = Math.max(1, ...dias.map((d) => d.dentro + d.fora + d.abertos + d.em_andamento));
+  const maximo = Math.max(1, ...dias.map((d) => d.total));
   const passo = Math.max(1, Math.ceil(dias.length / 8)); // ~8 rótulos no eixo
-  const segmentos = (d: Grupo) => [
-    { valor: d.dentro, cor: COR.dentro, rotulo: "No prazo" },
-    { valor: d.fora, cor: COR.fora, rotulo: "Fora do prazo" },
-    { valor: d.abertos + d.em_andamento, cor: COR.pendente, rotulo: "Em aberto" },
-  ];
 
   return (
     <figure className="flex flex-col gap-3">
-      <Legenda
-        itens={[
-          { cor: COR.dentro, rotulo: "Finalizados no prazo" },
-          { cor: COR.fora, rotulo: "Finalizados fora do prazo" },
-          { cor: COR.pendente, rotulo: "Ainda em aberto" },
-        ]}
-      />
+      <Legenda itens={SERIES_DIA.map((s) => ({ cor: s.cor, rotulo: s.rotulo }))} />
       <div className="relative">
         <div className="absolute inset-x-0 top-0 border-t" style={{ borderColor: COR.grade }} aria-hidden />
         <span className="absolute -top-2 right-0 bg-white pl-1 text-[10px] tabular-nums text-stone-400">{num(maximo)}</span>
         <div className="flex h-44 items-end gap-[2px] border-b" style={{ borderColor: COR.pendente }}>
-          {dias.map((d) => {
-            const total = d.dentro + d.fora + d.abertos + d.em_andamento;
-            return (
+          {dias.map((d) => (
+            <div
+              key={d.chave}
+              tabIndex={0}
+              className="group relative flex h-full flex-1 cursor-default flex-col items-center justify-end outline-none"
+              aria-label={`${rotuloDia(d.chave)}: ${SERIES_DIA.map((s) => `${s.valor(d)} ${s.rotulo.toLowerCase()}`).join(", ")}`}
+            >
               <div
-                key={d.chave}
-                tabIndex={0}
-                className="group relative flex h-full flex-1 cursor-default flex-col items-center justify-end outline-none"
-                aria-label={`${rotuloDia(d.chave)}: ${d.dentro} no prazo, ${d.fora} fora, ${d.abertos + d.em_andamento} em aberto`}
+                className="flex w-full max-w-6 flex-col-reverse gap-[2px] overflow-hidden rounded-t group-hover:opacity-80 group-focus:opacity-80"
+                style={{ height: `${(d.total / maximo) * 100}%` }}
               >
-                <div
-                  className="flex w-full max-w-6 flex-col-reverse gap-[2px] overflow-hidden rounded-t group-hover:opacity-80 group-focus:opacity-80"
-                  style={{ height: `${(total / maximo) * 100}%` }}
-                >
-                  {segmentos(d).map((s) =>
-                    s.valor > 0 ? <div key={s.rotulo} style={{ background: s.cor, flexGrow: s.valor }} /> : null,
-                  )}
-                </div>
-                {/* Tooltip (hover no computador, toque/foco no celular) */}
-                <div className="pointer-events-none absolute bottom-full z-10 mb-1 hidden w-40 rounded-lg border border-stone-200 bg-white p-2 text-xs shadow-lg group-hover:block group-focus:block">
-                  <p className="font-semibold text-stone-900">{rotuloDia(d.chave)} · {num(d.total)} chamados</p>
-                  {segmentos(d).map((s) => (
-                    <p key={s.rotulo} className="flex items-center justify-between gap-2 text-stone-600">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="h-2 w-2 rounded-sm" style={{ background: s.cor }} aria-hidden />
-                        {s.rotulo}
-                      </span>
-                      <span className="tabular-nums text-stone-900">{num(s.valor)}</span>
-                    </p>
-                  ))}
-                  {d.cancelados ? <p className="text-stone-500">Reprovados: {num(d.cancelados)}</p> : null}
-                </div>
+                {SERIES_DIA.map((s) =>
+                  s.valor(d) > 0 ? <div key={s.chave} style={{ background: s.cor, flexGrow: s.valor(d) }} /> : null,
+                )}
               </div>
-            );
-          })}
+              {/* Tooltip (hover no computador, toque/foco no celular) */}
+              <div className="pointer-events-none absolute bottom-full z-10 mb-1 hidden w-52 rounded-lg border border-stone-200 bg-white p-2 text-xs shadow-lg group-hover:block group-focus:block">
+                <p className="font-semibold text-stone-900">{rotuloDia(d.chave)} · {num(d.total)} chamados</p>
+                {SERIES_DIA.map((s) => (
+                  <p key={s.chave} className="flex items-center justify-between gap-2 text-stone-600">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-sm" style={{ background: s.cor }} aria-hidden />
+                      {s.rotulo}
+                    </span>
+                    <span className="tabular-nums text-stone-900">{num(s.valor(d))}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
         <div className="mt-1 flex gap-[2px] text-[10px] tabular-nums text-stone-500">
           {dias.map((d, i) => (
@@ -107,7 +111,9 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
                 <th>Total</th>
                 <th>No prazo</th>
                 <th>Fora</th>
+                <th>Reprovados</th>
                 <th>Em aberto</th>
+                <th>Atrasados</th>
                 <th>% no prazo</th>
               </tr>
             </thead>
@@ -116,9 +122,9 @@ export function GraficoDiario({ dias }: { dias: Grupo[] }) {
                 <tr key={d.chave} className="border-t border-stone-100">
                   <td className="py-1">{rotuloDia(d.chave)}</td>
                   <td>{num(d.total)}</td>
-                  <td>{num(d.dentro)}</td>
-                  <td>{num(d.fora)}</td>
-                  <td>{num(d.abertos + d.em_andamento)}</td>
+                  {SERIES_DIA.map((s) => (
+                    <td key={s.chave}>{num(s.valor(d))}</td>
+                  ))}
                   <td>{formatarPct(pctDentro(d))}</td>
                 </tr>
               ))}
