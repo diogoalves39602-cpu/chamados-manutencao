@@ -4,27 +4,30 @@ import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import {
   Ban,
-  CircleCheck,
+  Building2,
+  Clock,
   FileSpreadsheet,
   Hand,
-  Hourglass,
   Inbox,
   LayoutDashboard,
   ListChecks,
+  Sun,
+  Tag,
   Timer,
   TriangleAlert,
-  Wrench,
-  XCircle,
+  Users,
 } from "lucide-react";
 import { CabecalhoPagina, Cartao } from "@/components/ui";
 import { exigirEquipe } from "@/lib/auth/sessao";
 import { listarCategorias, listarTecnicos } from "@/lib/chamados/consultas";
-import { formatarDuracao } from "@/lib/chamados/rotulos";
+import { formatarDuracao, ROTULO_ORIGEM } from "@/lib/chamados/rotulos";
 import { formatarData, formatarDataHora, ROTULO_PERIODO } from "@/lib/datas";
 import {
   filtrosParaQuery,
   formatarPct,
+  agruparResto,
   lerFiltrosDashboard,
+  listarAtrasadosAgora,
   listarCancelados,
   obterIndicadores,
   pct,
@@ -35,7 +38,7 @@ import {
 } from "@/lib/indicadores";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { FiltrosDashboard } from "./filtros-dashboard";
-import { COR, GraficoDiario, Ranking } from "./graficos";
+import { Composicao, COR, GraficoDiario, GraficoHoras, Legenda, SERIES } from "./graficos";
 
 export const metadata: Metadata = { title: "Indicadores" };
 
@@ -70,6 +73,12 @@ function Bloco({
   );
 }
 
+const num = (n: number) => n.toLocaleString("pt-BR");
+
+function TituloSecao({ children }: { children: ReactNode }) {
+  return <h2 className="-mb-1 mt-2 text-xs font-bold uppercase tracking-wider text-stone-500">{children}</h2>;
+}
+
 function TituloCartao({ icone: Icone, titulo, subtitulo }: { icone: LucideIcon; titulo: string; subtitulo?: string }) {
   return (
     <div className="mb-4 flex items-start gap-2.5">
@@ -86,9 +95,10 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
   await exigirEquipe();
   const filtros = lerFiltrosDashboard(await searchParams);
   const supabase = await criarClienteServidor();
-  const [ind, cancelados, categorias, tecnicos, { data: turnos }] = await Promise.all([
+  const [ind, cancelados, atrasados, categorias, tecnicos, { data: turnos }] = await Promise.all([
     obterIndicadores(filtros),
     listarCancelados(filtros),
+    listarAtrasadosAgora(filtros),
     listarCategorias(),
     listarTecnicos(),
     supabase.from("turnos").select("nome").order("ordem"),
@@ -96,6 +106,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
   const t = ind.total;
   const ativos = t.abertos + t.em_andamento;
   const pctPrincipal = pctDentro(t);
+  const agora = new Date().getTime(); // Server Component: renderiza uma vez por requisição
 
   return (
     <div className="flex flex-col gap-5">
@@ -127,13 +138,16 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
         />
       </Suspense>
 
+      {/* ── Visão geral ─────────────────────────────────────────── */}
+      <TituloSecao>Visão geral do período</TituloSecao>
+
       {/* Indicador principal */}
       <section className="fundo-marca grid gap-5 overflow-hidden rounded-2xl p-5 text-white shadow-lg shadow-marca-900/20 sm:grid-cols-[auto_1fr] sm:items-center sm:p-6">
         <div>
           <p className="text-sm font-medium text-marca-100">Finalizados dentro do prazo</p>
           <p className="text-6xl font-bold tracking-tight">{formatarPct(pctPrincipal)}</p>
           <p className="mt-1 text-sm text-marca-100">
-            {t.dentro.toLocaleString("pt-BR")} de {t.finalizados.toLocaleString("pt-BR")} finalizados
+            {num(t.dentro)} de {num(t.finalizados)} finalizados
           </p>
         </div>
         <div className="flex flex-col gap-2.5 rounded-xl bg-white p-4 text-stone-800">
@@ -153,7 +167,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm" style={{ background: COR.fora }} aria-hidden />
-              Fora do prazo <strong>{formatarPct(pctFora(t))}</strong> ({t.fora.toLocaleString("pt-BR")})
+              Fora do prazo <strong>{formatarPct(pctFora(t))}</strong> ({num(t.fora)})
             </span>
           </div>
           <p className="border-t border-stone-100 pt-2 text-xs text-stone-500">
@@ -164,64 +178,143 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
       </section>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Bloco
-          icone={TriangleAlert}
-          rotulo="Atrasados agora"
-          valor={ind.atrasadosAgora.toLocaleString("pt-BR")}
-          detalhe="Fila atual com prazo estourado"
-          alerta={ind.atrasadosAgora > 0}
-        />
-        <Bloco
-          icone={ListChecks}
-          rotulo="Abertos no período"
-          valor={t.total.toLocaleString("pt-BR")}
-          detalhe={t.cancelados ? `${t.cancelados} reprovado${t.cancelados === 1 ? "" : "s"} (fora do SLA)` : "Nenhum reprovado"}
-        />
-        <Bloco icone={Timer} rotulo="Tempo médio de atendimento" valor={formatarDuracao(t.tempo_medio_total)} detalhe="Abertura até finalização" />
-        <Bloco icone={Hand} rotulo="Tempo médio até assumir" valor={formatarDuracao(t.tempo_medio_assumir)} detalhe="Abertura até alguém assumir" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Bloco icone={Inbox} rotulo="Aguardando" valor={t.abertos.toLocaleString("pt-BR")} detalhe={`${formatarPct(pct(t.abertos, t.total))} do total`} />
-        <Bloco icone={Wrench} rotulo="Em andamento" valor={t.em_andamento.toLocaleString("pt-BR")} detalhe={`${formatarPct(pct(t.em_andamento, t.total))} do total`} />
-        <Bloco icone={CircleCheck} rotulo="Finalizados" valor={t.finalizados.toLocaleString("pt-BR")} detalhe={`${formatarPct(pct(t.finalizados, t.total))} do total`} />
-        <Bloco
-          icone={t.atrasados ? Hourglass : XCircle}
-          rotulo="Ainda na fila"
-          valor={ativos.toLocaleString("pt-BR")}
-          detalhe={t.atrasados ? `${t.atrasados} já estouraram o prazo` : "Nenhum atrasado"}
-        />
-        <a href="#cancelados" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-marca-600 [&>div]:h-full [&>div]:transition-colors [&>div:hover]:border-stone-300">
+        <a href="#atrasados" className="rounded-2xl focus-visible:outline-2 focus-visible:outline-marca-600 [&>div]:h-full">
           <Bloco
-            icone={Ban}
-            rotulo="Reprovados"
-            valor={t.cancelados.toLocaleString("pt-BR")}
-            detalhe={t.cancelados ? `${formatarPct(pct(t.cancelados, t.total))} do total · ver motivos` : "Nenhum reprovado"}
+            icone={TriangleAlert}
+            rotulo="Atrasados agora"
+            valor={num(ind.atrasadosAgora)}
+            detalhe={ind.atrasadosAgora ? "Fila atual com prazo estourado · ver lista" : "Nenhum chamado atrasado"}
+            alerta={ind.atrasadosAgora > 0}
           />
         </a>
+        <Bloco icone={ListChecks} rotulo="Abertos no período" valor={num(t.total)} detalhe={`${num(ativos)} ainda na fila`} />
+        <Bloco
+          icone={Timer}
+          rotulo="Tempo de atendimento"
+          valor={formatarDuracao(t.tempo_medio_total)}
+          detalhe={`Média · mediana ${formatarDuracao(t.tempo_mediano_total)} (abertura até finalizar)`}
+        />
+        <Bloco
+          icone={Hand}
+          rotulo="Tempo até assumir"
+          valor={formatarDuracao(t.tempo_medio_assumir)}
+          detalhe={`Média · mediana ${formatarDuracao(t.tempo_mediano_assumir)}`}
+        />
       </div>
 
-      <Cartao>
-        <TituloCartao icone={LayoutDashboard} titulo="Evolução diária" subtitulo="Chamados por dia de abertura" />
-        <GraficoDiario dias={ind.porDia} />
+      {/* Situação de todos os chamados do período, nas mesmas cores dos gráficos */}
+      <Cartao className="flex flex-col gap-4">
+        <TituloCartao icone={Inbox} titulo="Situação dos chamados" subtitulo={`${num(t.total)} chamados abertos no período, pelo status atual`} />
+        <div
+          className="flex h-5 w-full gap-[2px] overflow-hidden rounded-full bg-stone-100"
+          role="img"
+          aria-label={SERIES.map((s) => `${s.valor(t)} ${s.rotulo.toLowerCase()}`).join(", ")}
+        >
+          {SERIES.map((s) => (s.valor(t) > 0 ? <div key={s.chave} style={{ flexGrow: s.valor(t), background: s.cor }} /> : null))}
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {SERIES.map((s) => {
+            const conteudo = (
+              <>
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-600">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: s.cor }} aria-hidden />
+                  {s.rotulo}
+                </p>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-stone-900">{num(s.valor(t))}</p>
+                <p className="text-xs text-stone-500">{formatarPct(pct(s.valor(t), t.total))} do total</p>
+              </>
+            );
+            const destino = s.chave === "reprovados" ? "#reprovados" : s.chave === "atrasados" ? "#atrasados" : null;
+            return destino ? (
+              <a key={s.chave} href={destino} className="rounded-xl border border-stone-200 p-3 hover:border-stone-300 hover:bg-stone-50">
+                {conteudo}
+              </a>
+            ) : (
+              <div key={s.chave} className="rounded-xl border border-stone-200 p-3">
+                {conteudo}
+              </div>
+            );
+          })}
+        </div>
       </Cartao>
 
+      {/* Atrasados agora: o que precisa de ação já */}
+      <Cartao id="atrasados" className="scroll-mt-20">
+        <TituloCartao
+          icone={TriangleAlert}
+          titulo="Atrasados agora"
+          subtitulo="Fila atual com prazo estourado (independe do período), do mais atrasado para o menos"
+        />
+        {atrasados.length === 0 ? (
+          <p className="text-sm text-stone-500">Nenhum chamado atrasado.</p>
+        ) : (
+          <ul className="-mx-2 divide-y divide-stone-100">
+            {atrasados.map((c) => (
+              <li key={c.numero}>
+                <Link
+                  href={`/painel/${c.numero}`}
+                  className="grid gap-1 rounded-xl px-2 py-3 hover:bg-stone-50 sm:grid-cols-[8rem_1fr_11rem] sm:items-center sm:gap-4"
+                >
+                  <p className="font-mono text-sm font-bold text-marca-800">{c.numero}</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-stone-900">{c.local}</p>
+                    <p className="truncate text-xs text-stone-500">
+                      {c.categoria?.nome ?? "—"} · {c.recebido?.nome ? `com ${c.recebido.nome}` : "ninguém assumiu"}
+                    </p>
+                  </div>
+                  <p className="inline-flex items-center gap-1 text-sm font-semibold text-red-700 sm:justify-end">
+                    <TriangleAlert className="h-4 w-4" aria-hidden />
+                    atrasado há {formatarDuracao((agora - new Date(c.prazo_limite).getTime()) / 60000)}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Cartao>
+
+      {/* ── Ao longo do tempo ───────────────────────────────────── */}
+      <TituloSecao>Ao longo do tempo</TituloSecao>
+      <Cartao>
+        <TituloCartao icone={LayoutDashboard} titulo="Evolução diária" subtitulo="Chamados por dia de abertura, com o status atual de cada um" />
+        <GraficoDiario dias={ind.porDia} />
+      </Cartao>
+      <Cartao>
+        <TituloCartao icone={Clock} titulo="Por hora do dia" subtitulo="Hora de abertura (horário de Brasília): ajuda a dimensionar os turnos" />
+        <GraficoHoras horas={ind.porHora} />
+      </Cartao>
+
+      {/* ── Onde estão os chamados ──────────────────────────────── */}
+      <TituloSecao>Onde estão os chamados</TituloSecao>
+      <Legenda />
       <div className="grid gap-4 lg:grid-cols-2">
         <Cartao>
-          <TituloCartao icone={ListChecks} titulo="Por categoria" subtitulo="Barra = total · % no prazo e tempo médio ao lado" />
-          <Ranking grupos={ind.porCategoria} />
+          <TituloCartao icone={Tag} titulo="Por categoria" subtitulo="Comprimento = total · cores = status · % no prazo e tempo médio ao lado" />
+          <Composicao grupos={ind.porCategoria} />
         </Cartao>
         <Cartao>
-          <TituloCartao icone={Hand} titulo="Por técnico (responsável)" subtitulo="Barra = total · % no prazo e tempo médio ao lado" />
-          <Ranking grupos={ind.porTecnico} />
+          <TituloCartao icone={Building2} titulo="Por setor de quem abriu" subtitulo="Os 8 setores com mais chamados (o resto em “Outros setores”)" />
+          <Composicao grupos={agruparResto(ind.porSetor, 8, "Outros setores")} />
         </Cartao>
-        <Cartao className="lg:col-span-2">
-          <TituloCartao icone={Timer} titulo="Por turno" subtitulo="Pela hora de abertura (horário de Brasília)" />
-          <Ranking grupos={ind.porTurno} />
+        <Cartao>
+          <TituloCartao icone={Inbox} titulo="Por origem" subtitulo="Por onde o chamado chegou" />
+          <Composicao grupos={ind.porOrigem} rotulo={(g) => ROTULO_ORIGEM[g.chave as keyof typeof ROTULO_ORIGEM] ?? g.chave} />
+        </Cartao>
+        <Cartao>
+          <TituloCartao icone={Sun} titulo="Por turno" subtitulo="Pela hora de abertura" />
+          <Composicao grupos={ind.porTurno} />
         </Cartao>
       </div>
 
-      <Cartao id="cancelados" className="scroll-mt-20">
+      {/* ── Equipe ──────────────────────────────────────────────── */}
+      <TituloSecao>Equipe</TituloSecao>
+      <Cartao>
+        <TituloCartao icone={Users} titulo="Por técnico (responsável)" subtitulo="Quem assumiu · % no prazo e tempo médio de atendimento ao lado" />
+        <Composicao grupos={ind.porTecnico} />
+      </Cartao>
+
+      {/* ── Reprovados ──────────────────────────────────────────── */}
+      <Cartao id="reprovados" className="scroll-mt-20">
         <TituloCartao
           icone={Ban}
           titulo="Chamados reprovados no período"
@@ -260,7 +353,10 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
         )}
       </Cartao>
 
-      <p className="text-xs text-stone-400">Atualizado em {formatarDataHora(new Date())}. Reprovados não entram no cálculo de SLA.</p>
+      <p className="text-xs text-stone-400">
+        Atualizado em {formatarDataHora(new Date(agora))}. Período pela data de abertura; percentuais de prazo sobre os
+        finalizados. Reprovados não entram no cálculo de SLA. Mediana: metade dos chamados levou menos que esse tempo.
+      </p>
     </div>
   );
 }

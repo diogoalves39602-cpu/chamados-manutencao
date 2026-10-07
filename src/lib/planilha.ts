@@ -49,6 +49,8 @@ export type LinhaResumo = {
   atrasados: number;
   tempo_medio_total: number | null;
   tempo_medio_assumir: number | null;
+  tempo_mediano_total?: number | null;
+  tempo_mediano_assumir?: number | null;
 };
 
 export type DadosPlanilha = {
@@ -58,6 +60,9 @@ export type DadosPlanilha = {
   porCategoria: LinhaResumo[];
   porTecnico: LinhaResumo[];
   porTurno: LinhaResumo[];
+  porOrigem?: LinhaResumo[];
+  porSetor?: LinhaResumo[];
+  porHora?: LinhaResumo[];
   atrasadosAgora: number;
   cabecalho: string[]; // linhas descritivas (período, filtros, gerado em)
 };
@@ -108,6 +113,7 @@ const CAB_TABELA = [
   "Total", "Abertos", "Em andamento", "Finalizados", "Reprovados",
   "Dentro do prazo", "Fora do prazo", "% dentro do prazo", "% fora do prazo",
   "Atrasados em aberto", "Tempo médio (min)", "Tempo médio até assumir (min)",
+  "Tempo mediano (min)", "Tempo mediano até assumir (min)",
 ];
 
 function linhaTabela(g: LinhaResumo, rotulo: Celula): Celula[] {
@@ -115,6 +121,7 @@ function linhaTabela(g: LinhaResumo, rotulo: Celula): Celula[] {
     rotulo, g.total, g.abertos, g.em_andamento, g.finalizados, g.cancelados,
     g.dentro, g.fora, celulaPct(g.dentro, g.finalizados), celulaPct(g.fora, g.finalizados),
     g.atrasados, celulaMin(g.tempo_medio_total), celulaMin(g.tempo_medio_assumir),
+    celulaMin(g.tempo_mediano_total), celulaMin(g.tempo_mediano_assumir),
   ];
 }
 
@@ -136,6 +143,8 @@ function abaResumo(d: DadosPlanilha) {
     ["Atrasados agora (fila atual, independe do período)", d.atrasadosAgora, null],
     ["Tempo médio de atendimento (min)", celulaMin(t.tempo_medio_total), null],
     ["Tempo médio até assumir (min)", celulaMin(t.tempo_medio_assumir), null],
+    ["Tempo mediano de atendimento (min)", celulaMin(t.tempo_mediano_total), null],
+    ["Tempo mediano até assumir (min)", celulaMin(t.tempo_mediano_assumir), null],
     [],
     ["Percentuais de prazo calculados sobre os finalizados; percentuais de status sobre o total."],
   ];
@@ -148,6 +157,9 @@ function abaResumo(d: DadosPlanilha) {
     ["Por categoria", d.porCategoria, (g) => g.chave],
     ["Por técnico (responsável)", d.porTecnico, (g) => g.chave],
     ["Por turno", d.porTurno, (g) => g.chave],
+    ["Por origem", d.porOrigem ?? [], (g) => ROTULO_ORIGEM[g.chave as keyof typeof ROTULO_ORIGEM] ?? g.chave],
+    ["Por setor de quem abriu", d.porSetor ?? [], (g) => g.chave],
+    ["Por hora do dia (abertura, horário de Brasília)", (d.porHora ?? []).filter((g) => g.total > 0), (g) => `${Number(g.chave)}h às ${Number(g.chave) + 1}h`],
   ];
   for (const [titulo, grupos, rotulo] of secoes) {
     linhas.push([], [titulo, ...CAB_TABELA]);

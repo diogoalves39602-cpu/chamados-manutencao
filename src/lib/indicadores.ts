@@ -47,7 +47,13 @@ export function filtrosParaQuery(f: FiltrosDashboard) {
 const VAZIO = (dimensao: Grupo["dimensao"], chave: string): Grupo => ({
   dimensao, chave, total: 0, abertos: 0, em_andamento: 0, finalizados: 0, cancelados: 0,
   dentro: 0, fora: 0, atrasados: 0, tempo_medio_total: null, tempo_medio_assumir: null,
+  tempo_mediano_total: null, tempo_mediano_assumir: null,
 });
+
+const HORAS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, "0"));
+const numOuNulo = (v: unknown) => (v == null ? null : Number(v));
+/** "cftv" → "Cftv" só quando a pessoa digitou tudo minúsculo; mantém siglas e acentos digitados. */
+const capitalizar = (t: string) => (t === t.toLowerCase() ? t.charAt(0).toUpperCase() + t.slice(1) : t);
 
 export type Indicadores = {
   total: Grupo;
@@ -55,6 +61,9 @@ export type Indicadores = {
   porCategoria: Grupo[];
   porTecnico: Grupo[];
   porTurno: Grupo[];
+  porOrigem: Grupo[];
+  porHora: Grupo[];
+  porSetor: Grupo[];
   atrasadosAgora: number;
 };
 
@@ -72,8 +81,10 @@ export async function obterIndicadores(f: FiltrosDashboard): Promise<Indicadores
   const resultado = data as { grupos: Grupo[]; atrasados_agora: number };
   const grupos = resultado.grupos.map((g) => ({
     ...g,
-    tempo_medio_total: g.tempo_medio_total == null ? null : Number(g.tempo_medio_total),
-    tempo_medio_assumir: g.tempo_medio_assumir == null ? null : Number(g.tempo_medio_assumir),
+    tempo_medio_total: numOuNulo(g.tempo_medio_total),
+    tempo_medio_assumir: numOuNulo(g.tempo_medio_assumir),
+    tempo_mediano_total: numOuNulo(g.tempo_mediano_total),
+    tempo_mediano_assumir: numOuNulo(g.tempo_mediano_assumir),
   }));
   const de = (d: Grupo["dimensao"]) => grupos.filter((g) => g.dimensao === d);
   const porTotal = (a: Grupo, b: Grupo) => b.total - a.total || a.chave.localeCompare(b.chave, "pt-BR");
@@ -88,6 +99,14 @@ export async function obterIndicadores(f: FiltrosDashboard): Promise<Indicadores
     porCategoria: de("categoria").sort(porTotal),
     porTecnico: de("tecnico").sort(porTotal),
     porTurno: de("turno").sort((a, b) => a.chave.localeCompare(b.chave, "pt-BR")),
+    porOrigem: de("origem").sort(porTotal),
+    porHora: (() => {
+      const mapa = new Map(de("hora").map((g) => [g.chave, g]));
+      return HORAS.map((h) => mapa.get(h) ?? VAZIO("hora", h));
+    })(),
+    porSetor: de("setor")
+      .map((g) => ({ ...g, chave: capitalizar(g.rotulo?.trim() || g.chave) }))
+      .sort(porTotal),
     atrasadosAgora: Number(resultado.atrasados_agora),
   };
 }
@@ -120,4 +139,29 @@ export async function listarCancelados(f: FiltrosDashboard, limite = 50) {
   const { data, error } = await q.order("cancelado_em", { ascending: false }).limit(limite);
   if (error) throw new Error(`cancelados: ${error.message}`);
   return (data ?? []) as unknown as ChamadoCancelado[];
+}
+
+export type ChamadoAtrasado = {
+  numero: string;
+  local: string;
+  status: "aberto" | "em_andamento";
+  prazo_limite: string;
+  categoria: { nome: string } | null;
+  recebido: { nome: string } | null;
+};
+
+/** Fila atual com prazo estourado (independe do período), com os filtros de categoria/técnico/turno. */
+export async function listarAtrasadosAgora(f: FiltrosDashboard, limite = 30) {
+  const supabase = await criarClienteServidor();
+  let q = supabase
+    .from("chamados")
+    .select("numero, local, status, prazo_limite, categoria:categorias(nome), recebido:perfis!chamados_recebido_por_fkey(nome)")
+    .in("status", ["aberto", "em_andamento"])
+    .lt("prazo_limite", new Date().toISOString());
+  if (f.categoria) q = q.eq("categoria_id", f.categoria);
+  if (f.tecnico) q = q.eq("recebido_por", f.tecnico);
+  if (f.turno) q = q.eq("turno", f.turno);
+  const { data, error } = await q.order("prazo_limite").limit(limite);
+  if (error) throw new Error(`atrasados: ${error.message}`);
+  return (data ?? []) as unknown as ChamadoAtrasado[];
 }
