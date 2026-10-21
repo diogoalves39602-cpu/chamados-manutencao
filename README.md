@@ -1,5 +1,9 @@
 # Sistema de Chamados de Manutenção (SLA de 2h, operação 24/7)
 
+> **© 2026 Diogo Alves de Jesus. Todos os direitos reservados.** Software proprietário: o acesso a este
+> repositório é só para leitura e avaliação. Copiar, modificar, usar ou hospedar depende de autorização
+> por escrito do autor. Veja [LICENSE](LICENSE).
+
 **Link único:** https://chamados-manutencao.netlify.app — colaboradores abrem e acompanham chamados;
 a equipe logada vê o atalho para o painel. É o mesmo endereço do QR Code, do app instalado e do app do Feishu.
 

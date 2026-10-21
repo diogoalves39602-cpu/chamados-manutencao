@@ -2,6 +2,8 @@
   "name": "chamados-manutencao",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Diogo Alves de Jesus",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
